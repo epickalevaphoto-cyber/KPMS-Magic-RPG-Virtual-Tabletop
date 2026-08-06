@@ -1,0 +1,80 @@
+body {
+
+margin:0;
+
+font-family: Georgia, serif;
+
+background:#F4E8D0;
+
+color:#3B2A1A;
+
+}
+
+
+.page {
+
+min-height:100vh;
+
+display:flex;
+
+flex-direction:column;
+
+align-items:center;
+
+justify-content:center;
+
+text-align:center;
+
+}
+
+
+h1 {
+
+font-size:70px;
+
+}
+
+
+button {
+
+background:#3B2A1A;
+
+color:white;
+
+border:none;
+
+padding:15px 30px;
+
+margin:10px;
+
+border-radius:10px;
+
+cursor:pointer;
+
+font-size:18px;
+
+}
+
+
+button:hover {
+
+opacity:0.8;
+
+}
+
+
+.panel {
+
+margin-top:30px;
+
+background:#fff8e7;
+
+padding:30px;
+
+border:1px solid #B08D57;
+
+border-radius:15px;
+
+width:350px;
+
+}
