@@ -2,17 +2,17 @@
 
 Virtual tabletop platform for Harry Potter RPG.
 
-## Возможности
+## Features
 
-- Интерактивный чарлист
-- Онлайн комнаты
-- Чат
-- Кубики
-- Карта
-- Книга игрока
-- Рабочий стол мастера
-- AI помощник
+- Character sheet
+- Dice rolls
+- Multiplayer rooms
+- Chat
+- Interactive map
+- Player book
+- Master dashboard
+- AI assistant
 
-## Статус
+## Status
 
 Development
