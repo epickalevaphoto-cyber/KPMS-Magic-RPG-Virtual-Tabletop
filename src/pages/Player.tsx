@@ -8,8 +8,13 @@ import Button from '../components/ui/Button';
 import CharacterSheet from '../components/character/CharacterSheet';
 import DiceRoller from '../components/dice/DiceRoller';
 import Chat from '../components/chat/Chat';
-import { useChat } from '../hooks/useChat';
-import { getRoom } from '../services/roomService';
+import { 
+  getRoomSupabase, 
+  getPlayersSupabase,
+  subscribeToPlayersSupabase,
+  subscribeToMessagesSupabase
+} from '../services/supabase';
+import { useSupabaseChat } from '../hooks/useSupabaseChat';
 import { 
   getCharacterByUser, 
   createCharacter, 
@@ -34,37 +39,66 @@ const Player = () => {
   const [showCharacterList, setShowCharacterList] = useState(false);
   const [showDiceRoller, setShowDiceRoller] = useState(false);
   const [room, setRoom] = useState<any>(null);
-  const userId = getPlayerId();
+  const [players, setPlayers] = useState<any[]>([]);
   const [playerName, setPlayerName] = useState('');
+  const [loading, setLoading] = useState(true);
+  const userId = getPlayerId();
 
-  const { messages, sendMessage, sendRollMessage } = useChat(code || '', playerName || 'Игрок');
+  // Чат через Supabase
+  const { messages, send, sendRoll } = useSupabaseChat(code || '', userId, playerName || 'Игрок');
 
   useEffect(() => {
-    if (code) {
-      const currentRoom = getRoom(code);
-      setRoom(currentRoom);
-      
-      if (!currentRoom) {
-        navigate('/');
-      } else {
-        const player = currentRoom.players.find(p => p.id === userId);
-        if (player) {
-          setPlayerName(player.name);
-        }
-      }
-    } else {
+    if (!code) {
       navigate('/');
+      return;
     }
+
+    const loadData = async () => {
+      setLoading(true);
+      
+      // Загружаем комнату
+      const roomData = await getRoomSupabase(code);
+      if (!roomData) {
+        navigate('/');
+        return;
+      }
+      setRoom(roomData);
+
+      // Загружаем игроков
+      const playersData = await getPlayersSupabase(code);
+      setPlayers(playersData);
+
+      // Находим игрока
+      const player = playersData.find(p => p.user_id === userId);
+      if (player) {
+        setPlayerName(player.name);
+      }
+
+      setLoading(false);
+    };
+
+    loadData();
+
+    // Подписка на игроков
+    const playersSubscription = subscribeToPlayersSupabase(code, (payload) => {
+      if (payload.eventType === 'INSERT') {
+        setPlayers(prev => [...prev, payload.new]);
+      } else if (payload.eventType === 'DELETE') {
+        setPlayers(prev => prev.filter(p => p.id !== payload.old.id));
+      }
+    });
+
+    return () => {
+      playersSubscription.unsubscribe();
+    };
   }, [code, navigate, userId]);
 
-  if (!room) {
+  if (!room || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-soft-ivory">
         <div className="text-center">
-          <p className="text-2xl font-serif text-dark-chocolate mb-4">Комната не найдена</p>
-          <Button variant="primary" onClick={() => navigate('/')}>
-            Вернуться на главную
-          </Button>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-caramel mx-auto mb-4"></div>
+          <p className="text-walnut/60">Загрузка...</p>
         </div>
       </div>
     );
@@ -86,7 +120,7 @@ const Player = () => {
   };
 
   const handleRoll = (text: string) => {
-    sendRollMessage(text);
+    sendRoll(text);
   };
 
   return (
@@ -111,7 +145,7 @@ const Player = () => {
           </button>
           <div className="flex items-center space-x-2 text-sm text-walnut/60">
             <Users className="w-4 h-4" />
-            <span>{room.players.length} игроков</span>
+            <span>{players.length} игроков</span>
           </div>
           <Button variant="ghost" size="sm" onClick={() => navigate('/')} className="text-walnut/60 hover:text-dark-chocolate">
             <LogOut className="w-4 h-4 mr-1" /> Выйти
@@ -134,7 +168,7 @@ const Player = () => {
         <div className="w-80 flex flex-col">
           <Chat
             messages={messages}
-            onSendMessage={sendMessage}
+            onSendMessage={send}
             currentUserName={playerName || 'Игрок'}
             className="flex-1"
             maxHeight="calc(100vh - 200px)"
