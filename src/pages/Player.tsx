@@ -1,12 +1,30 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { LogOut, BookOpen, Sparkles, FlaskConical, Dice5, Backpack, Settings, Users } from 'lucide-react';
+import { useState } from 'react';
+import { 
+  LogOut, BookOpen, Sparkles, FlaskConical, Dice5, 
+  Backpack, Settings, Users, User, Plus 
+} from 'lucide-react';
 import Button from '../components/ui/Button';
+import CharacterSheet from '../components/character/CharacterSheet';
 import { getRoom } from '../services/roomService';
+import { 
+  getCharacterByUser, 
+  createCharacter, 
+  getCharactersByRoom 
+} from '../services/characterService';
+import { Character } from '../types/character';
 
 const Player = () => {
   const { code } = useParams<{ code: string }>();
   const navigate = useNavigate();
+  const [showCharacterSheet, setShowCharacterSheet] = useState(false);
+  const [selectedCharacter, setSelectedCharacter] = useState<Character | null>(null);
+  const [showCharacterList, setShowCharacterList] = useState(false);
+
   const room = code ? getRoom(code) : null;
+
+  // Используем фиктивный userId для демонстрации
+  const userId = 'player_1';
 
   if (!room) {
     return (
@@ -21,6 +39,21 @@ const Player = () => {
     );
   }
 
+  const characters = getCharactersByRoom(room.id);
+  const myCharacter = getCharacterByUser(userId, room.id);
+
+  const handleCreateCharacter = () => {
+    const newChar = createCharacter(userId, room.id, `Игрок ${characters.length + 1}`);
+    setSelectedCharacter(newChar);
+    setShowCharacterSheet(true);
+  };
+
+  const handleSelectCharacter = (char: Character) => {
+    setSelectedCharacter(char);
+    setShowCharacterSheet(true);
+    setShowCharacterList(false);
+  };
+
   return (
     <div className="flex flex-col h-screen bg-krem">
       <header className="flex justify-between items-center px-6 py-3 border-b border-gold/20 bg-white/30 backdrop-blur-sm">
@@ -32,6 +65,15 @@ const Player = () => {
           </span>
         </div>
         <div className="flex items-center space-x-4">
+          <button
+            onClick={() => setShowCharacterList(!showCharacterList)}
+            className="flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-gold/10 hover:bg-gold/20 transition-colors"
+          >
+            <User className="w-4 h-4 text-gold" />
+            <span className="text-sm text-brown-dark/80">
+              {myCharacter ? myCharacter.name : 'Нет персонажа'}
+            </span>
+          </button>
           <div className="flex items-center space-x-2 text-sm text-brown-dark/60">
             <Users className="w-4 h-4" />
             <span>{room.players.length} игроков</span>
@@ -62,6 +104,18 @@ const Player = () => {
       </main>
 
       <footer className="bg-white/50 backdrop-blur-sm border-t border-gold/20 p-2 flex justify-around items-center">
+        <button
+          onClick={() => {
+            if (myCharacter) {
+              setSelectedCharacter(myCharacter);
+              setShowCharacterSheet(true);
+            }
+          }}
+          className="flex flex-col items-center text-brown-dark/60 hover:text-gold transition-colors"
+        >
+          <User className="w-5 h-5" />
+          <span className="text-[10px] font-medium mt-0.5">Персонаж</span>
+        </button>
         <button className="flex flex-col items-center text-brown-dark/60 hover:text-gold transition-colors">
           <BookOpen className="w-5 h-5" />
           <span className="text-[10px] font-medium mt-0.5">Правила</span>
@@ -89,6 +143,53 @@ const Player = () => {
           <span className="text-[10px] font-medium mt-0.5">Настройки</span>
         </button>
       </footer>
+
+      {/* Список персонажей */}
+      {showCharacterList && (
+        <div className="absolute right-4 top-16 bg-white rounded-xl shadow-xl border border-gold/20 p-4 min-w-64 z-10">
+          <h4 className="font-serif text-sm font-semibold mb-3">Мои персонажи</h4>
+          {characters.length === 0 ? (
+            <p className="text-xs text-brown-dark/40">Нет персонажей</p>
+          ) : (
+            <div className="space-y-2">
+              {characters.map(char => (
+                <button
+                  key={char.id}
+                  onClick={() => handleSelectCharacter(char)}
+                  className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
+                    myCharacter?.id === char.id ? 'bg-gold/10 border border-gold/30' : 'hover:bg-krem/50'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span>{char.name}</span>
+                    <span className="text-xs text-brown-dark/40">{char.house || 'Без факультета'}</span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+          <Button
+            variant="primary"
+            size="sm"
+            className="w-full mt-3"
+            onClick={handleCreateCharacter}
+          >
+            <Plus className="w-4 h-4 mr-1" /> Создать персонажа
+          </Button>
+        </div>
+      )}
+
+      {/* Чарлист */}
+      {showCharacterSheet && selectedCharacter && (
+        <CharacterSheet
+          character={selectedCharacter}
+          onClose={() => {
+            setShowCharacterSheet(false);
+            setShowCharacterList(false);
+          }}
+          readOnly={false}
+        />
+      )}
     </div>
   );
 };
