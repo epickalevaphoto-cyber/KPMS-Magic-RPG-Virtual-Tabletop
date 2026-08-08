@@ -2,7 +2,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { 
   LogOut, Users, Map, Settings, BookOpen, Sparkles, 
-  FlaskConical, Dice5, Copy, Check, Eye, Key, Lock, Unlock 
+  FlaskConical, Dice5, Copy, Check, Eye, Key 
 } from 'lucide-react';
 import Button from '../components/ui/Button';
 import CharacterSheet from '../components/character/CharacterSheet';
