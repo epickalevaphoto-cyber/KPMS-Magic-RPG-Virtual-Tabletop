@@ -11,7 +11,7 @@ import {
   getSupabaseStatus
 } from '../services/supabase';
 
-const BACKGROUND_IMAGE = 'https://i.pinimg.com/1200x/45/61/46/456146dc3b37b62b8f3c23cb903cf751.jpg';
+const BACKGROUND_IMAGE = 'https://images.unsplash.com/photo-1519681393784-d120267933ba?w=1920&q=80';
 
 const Home = () => {
   const navigate = useNavigate();
@@ -41,15 +41,18 @@ const Home = () => {
     return () => clearInterval(interval);
   }, []);
 
- const handleCreateRoom = async () => {
-  // ...
-  const { room, error: createError } = await createRoomSupabase(
-    masterName.trim(),
-    roomName.trim() || 'Новая игра',
-    roomPassword.trim()
-  );
-  // ...
-}
+  const handleCreateRoom = async () => {
+    if (!masterName.trim()) {
+      setError('Введите ваше имя');
+      return;
+    }
+
+    setLoading(true);
+    const { room, error: createError } = await createRoomSupabase(
+      masterName.trim(),
+      roomName.trim() || 'Новая игра',
+      roomPassword.trim()
+    );
 
     setLoading(false);
 
@@ -257,7 +260,7 @@ const Home = () => {
         </div>
       </div>
 
-      {/* Модальные окна... (остаются без изменений) */}
+      {/* Модальное окно создания комнаты */}
       {showCreateModal && (
         <div className="fixed inset-0 bg-dark-chocolate/60 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setShowCreateModal(false)}>
           <div className="bg-soft-ivory rounded-2xl shadow-2xl max-w-md w-full p-6 transform transition-all" onClick={e => e.stopPropagation()}>
@@ -319,6 +322,7 @@ const Home = () => {
         </div>
       )}
 
+      {/* Модальное окно присоединения */}
       {showJoinModal && (
         <div className="fixed inset-0 bg-dark-chocolate/60 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setShowJoinModal(false)}>
           <div className="bg-soft-ivory rounded-2xl shadow-2xl max-w-md w-full p-6" onClick={e => e.stopPropagation()}>
@@ -380,6 +384,7 @@ const Home = () => {
         </div>
       )}
 
+      {/* Модальное окно подтверждения удаления */}
       {showConfirmDelete && (
         <div className="fixed inset-0 bg-dark-chocolate/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-soft-ivory rounded-2xl shadow-2xl max-w-md w-full p-6">
