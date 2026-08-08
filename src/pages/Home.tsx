@@ -1,19 +1,35 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Wand2, Users, Plus, LogIn, X } from 'lucide-react';
+import { Wand2, Users, Plus, LogIn, X, List, Copy } from 'lucide-react';
 import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
-import { createRoom, joinRoom } from '../services/roomService';
+import { createRoom, joinRoom, getRooms } from '../services/roomService';
 
 const Home = () => {
   const navigate = useNavigate();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showJoinModal, setShowJoinModal] = useState(false);
+  const [showRoomList, setShowRoomList] = useState(false);
   const [roomName, setRoomName] = useState('');
   const [masterName, setMasterName] = useState('');
   const [roomCode, setRoomCode] = useState('');
   const [playerName, setPlayerName] = useState('');
   const [error, setError] = useState('');
+  const [rooms, setRooms] = useState<any[]>([]);
+
+  // Загружаем список комнат при открытии
+  useEffect(() => {
+    const loadRooms = () => {
+      const allRooms = getRooms();
+      setRooms(allRooms);
+      console.log('📋 Все комнаты:', allRooms);
+    };
+    loadRooms();
+    
+    // Обновляем список каждые 5 секунд
+    const interval = setInterval(loadRooms, 5000);
+    return () => clearInterval(interval);
+  }, []);
 
   const handleCreateRoom = () => {
     if (!masterName.trim()) {
@@ -22,7 +38,7 @@ const Home = () => {
     }
 
     const room = createRoom(masterName.trim(), roomName.trim() || 'Новая игра');
-    console.log('✅ Room created, navigating to:', `/master/${room.code}`);
+    console.log('✅ Room created:', { code: room.code, name: room.name });
     setShowCreateModal(false);
     setError('');
     navigate(`/master/${room.code}`);
@@ -52,6 +68,16 @@ const Home = () => {
     setShowJoinModal(false);
     setError('');
     navigate(`/player/${room.code}`);
+  };
+
+  const handleJoinFromList = (code: string) => {
+    setRoomCode(code);
+    setShowRoomList(false);
+    setShowJoinModal(true);
+  };
+
+  const copyCode = (code: string) => {
+    navigator.clipboard.writeText(code);
   };
 
   return (
@@ -90,6 +116,55 @@ const Home = () => {
             </Button>
           </Card>
         </div>
+
+        {/* Кнопка для просмотра комнат */}
+        <div className="mt-6">
+          <button
+            onClick={() => setShowRoomList(!showRoomList)}
+            className="text-sm text-brown-dark/50 hover:text-gold transition-colors flex items-center justify-center mx-auto space-x-2"
+          >
+            <List className="w-4 h-4" />
+            <span>Показать активные комнаты ({rooms.length})</span>
+          </button>
+        </div>
+
+        {/* Список активных комнат */}
+        {showRoomList && (
+          <div className="mt-4 bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border border-gold/20 p-4 max-h-60 overflow-y-auto">
+            <h3 className="font-serif text-sm font-semibold text-brown-dark/70 mb-3">Активные комнаты:</h3>
+            {rooms.length === 0 ? (
+              <p className="text-sm text-brown-dark/40">Нет активных комнат</p>
+            ) : (
+              <div className="space-y-2">
+                {rooms.map((room, index) => (
+                  <div key={index} className="flex items-center justify-between bg-krem/30 rounded-lg px-4 py-2">
+                    <div className="text-left">
+                      <div className="font-mono font-bold text-gold">{room.code}</div>
+                      <div className="text-xs text-brown-dark/60">{room.name}</div>
+                      <div className="text-xs text-brown-dark/40">Игроков: {room.players.length}</div>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <button
+                        onClick={() => copyCode(room.code)}
+                        className="p-1 text-brown-dark/40 hover:text-gold transition-colors"
+                        title="Скопировать код"
+                      >
+                        <Copy className="w-4 h-4" />
+                      </button>
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        onClick={() => handleJoinFromList(room.code)}
+                      >
+                        Войти
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         <div className="mt-8 text-brown-dark/40 text-sm tracking-wider">
           <span>✦ Версия 0.2 ✦</span>
