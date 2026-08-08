@@ -79,7 +79,6 @@ export function joinRoom(code: string, playerName: string): GameRoom | null {
     return null;
   }
 
-  // Проверяем, не присоединен ли уже игрок с таким именем
   const existingPlayer = room.players.find(p => p.name === playerName.trim());
   if (existingPlayer) {
     console.log('❌ Player with same name already exists:', playerName);
@@ -112,8 +111,37 @@ export function removeRoom(code: string): boolean {
   const result = rooms.delete(code.toUpperCase());
   if (result) {
     saveRooms(rooms);
+    console.log('🗑️ Room removed:', code);
   }
   return result;
+}
+
+// Новая функция: удаление всех комнат
+export function clearAllRooms(): void {
+  rooms.clear();
+  saveRooms(rooms);
+  console.log('🗑️ All rooms cleared');
+}
+
+// Новая функция: удаление старых комнат (старше указанного времени)
+export function removeOldRooms(maxAgeHours: number = 24): number {
+  const now = Date.now();
+  const maxAge = maxAgeHours * 60 * 60 * 1000;
+  let removed = 0;
+  
+  for (const [code, room] of rooms) {
+    if (now - room.createdAt > maxAge) {
+      rooms.delete(code);
+      removed++;
+    }
+  }
+  
+  if (removed > 0) {
+    saveRooms(rooms);
+    console.log(`🗑️ Removed ${removed} old rooms`);
+  }
+  
+  return removed;
 }
 
 export function roomExists(code: string): boolean {
