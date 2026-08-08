@@ -2,18 +2,19 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { 
   LogOut, Users, Map, Settings, BookOpen, Sparkles, 
-  FlaskConical, Dice5, Copy, Check, User, Eye 
+  FlaskConical, Dice5, Copy, Check, Eye 
 } from 'lucide-react';
 import Button from '../components/ui/Button';
 import CharacterSheet from '../components/character/CharacterSheet';
 import { getRoom, removeRoom } from '../services/roomService';
 import { getCharactersByRoom } from '../services/characterService';
+import { Character } from '../types/character';
 
 const Master = () => {
   const { code } = useParams<{ code: string }>();
   const navigate = useNavigate();
   const [copied, setCopied] = useState(false);
-  const [selectedCharacter, setSelectedCharacter] = useState(null);
+  const [selectedCharacter, setSelectedCharacter] = useState<Character | null>(null);
   const [showCharacterSheet, setShowCharacterSheet] = useState(false);
 
   const room = code ? getRoom(code) : null;
@@ -150,7 +151,6 @@ const Master = () => {
         </div>
       </div>
 
-      {/* Чарлист для мастера (только просмотр) */}
       {showCharacterSheet && selectedCharacter && (
         <CharacterSheet
           character={selectedCharacter}
