@@ -1,22 +1,69 @@
-import { useNavigate } from 'react-router-dom';
-import { LogOut, Users, Map, Settings, BookOpen, Sparkles, FlaskConical, Dice5 } from 'lucide-react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { LogOut, Users, Map, Settings, BookOpen, Sparkles, FlaskConical, Dice5, Copy, Check } from 'lucide-react';
+import { useState } from 'react';
 import Button from '../components/ui/Button';
+import { getRoom, removeRoom } from '../services/roomService';
 
 const Master = () => {
+  const { code } = useParams<{ code: string }>();
   const navigate = useNavigate();
+  const [copied, setCopied] = useState(false);
+
+  const room = code ? getRoom(code) : null;
+
+  if (!room) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-krem">
+        <div className="text-center">
+          <p className="text-2xl font-serif mb-4">Комната не найдена</p>
+          <Button variant="primary" onClick={() => navigate('/')}>
+            Вернуться на главную
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  const handleCopyCode = () => {
+    navigator.clipboard.writeText(room.code);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleEndGame = () => {
+    if (window.confirm('Вы уверены, что хотите завершить игру?')) {
+      removeRoom(room.code);
+      navigate('/');
+    }
+  };
+
   return (
     <div className="flex flex-col h-screen bg-krem">
       <header className="flex justify-between items-center px-6 py-3 border-b border-gold/20 bg-white/30 backdrop-blur-sm">
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-4">
           <span className="font-serif text-xl text-ink">KPMS</span>
           <span className="text-xs text-brown-dark/50 bg-gold/10 px-2 py-0.5 rounded-full">Мастер</span>
+          <div className="flex items-center space-x-2 ml-4">
+            <span className="text-sm text-brown-dark/60">Код:</span>
+            <span className="font-mono font-bold text-lg text-gold bg-gold/10 px-3 py-1 rounded-lg">
+              {room.code}
+            </span>
+            <button
+              onClick={handleCopyCode}
+              className="p-1 hover:bg-gold/10 rounded-lg transition-colors"
+              title="Скопировать код"
+            >
+              {copied ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4 text-brown-dark/60" />}
+            </button>
+          </div>
         </div>
         <div className="flex items-center space-x-4">
-          <Button variant="ghost" size="sm" className="text-brown-dark/60 hover:text-ink">
-            <Users className="w-4 h-4 mr-1" /> Игроки
-          </Button>
-          <Button variant="ghost" size="sm" onClick={() => navigate('/')} className="text-brown-dark/60 hover:text-ink">
-            <LogOut className="w-4 h-4 mr-1" /> Выйти
+          <div className="flex items-center space-x-2 text-sm text-brown-dark/60">
+            <Users className="w-4 h-4" />
+            <span>{room.players.length} игроков</span>
+          </div>
+          <Button variant="ghost" size="sm" className="text-brown-dark/60 hover:text-ink" onClick={handleEndGame}>
+            <LogOut className="w-4 h-4 mr-1" /> Завершить
           </Button>
         </div>
       </header>
@@ -51,26 +98,26 @@ const Master = () => {
           <div className="absolute inset-0 flex items-center justify-center text-brown-dark/30">
             <div className="text-center">
               <p className="text-6xl mb-4">🗺️</p>
-              <p className="font-serif text-2xl">Карта Мастера</p>
-              <p className="text-sm">Туман войны, токены, заметки</p>
+              <p className="font-serif text-2xl">{room.name}</p>
+              <p className="text-sm">Карта Мастера</p>
+              <p className="text-xs mt-2 text-brown-dark/20">Код комнаты: {room.code}</p>
             </div>
           </div>
           
-          <div className="absolute top-4 right-4 bg-white/70 backdrop-blur-sm rounded-lg shadow-lg border border-gold/20 p-3 w-48">
-            <p className="text-xs font-semibold text-brown-dark/70 border-b border-gold/20 pb-1 mb-2">Игроки в сессии</p>
+          <div className="absolute top-4 right-4 bg-white/70 backdrop-blur-sm rounded-lg shadow-lg border border-gold/20 p-3 min-w-48">
+            <p className="text-xs font-semibold text-brown-dark/70 border-b border-gold/20 pb-1 mb-2">
+              Игроки ({room.players.length})
+            </p>
             <div className="space-y-1">
-              <div className="flex items-center justify-between text-xs">
-                <span>Анна</span>
-                <span className="w-2 h-2 rounded-full bg-green-500"></span>
-              </div>
-              <div className="flex items-center justify-between text-xs">
-                <span>Том</span>
-                <span className="w-2 h-2 rounded-full bg-green-500"></span>
-              </div>
-              <div className="flex items-center justify-between text-xs">
-                <span>Мария</span>
-                <span className="w-2 h-2 rounded-full bg-yellow-500"></span>
-              </div>
+              {room.players.map((player, index) => (
+                <div key={index} className="flex items-center justify-between text-xs">
+                  <span className="flex items-center space-x-1">
+                    {player.role === 'master' && <span className="text-gold">👑</span>}
+                    <span>{player.name}</span>
+                  </span>
+                  <span className={`w-2 h-2 rounded-full ${player.role === 'master' ? 'bg-gold' : 'bg-green-500'}`}></span>
+                </div>
+              ))}
             </div>
           </div>
         </div>
