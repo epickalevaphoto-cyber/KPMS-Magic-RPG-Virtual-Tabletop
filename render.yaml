@@ -1,1 +1,10 @@
-.
+services:
+  - type: web
+    name: kpms-magic-rpg
+    runtime: node
+    buildCommand: npm install && npm run build
+    startCommand: npm run serve
+    envVars:
+      - key: NODE_VERSION
+        value: 18
+    plan: free
