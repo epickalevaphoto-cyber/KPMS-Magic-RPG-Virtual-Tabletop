@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { 
   X, Save, Edit2, Plus, Trash2, Sparkles, 
   FlaskConical, BookOpen, Sword, Shield, 
-  Zap, Brain, Heart, Eye, Wind, 
+  Zap, Brain, Heart, Wind, 
   Check, ChevronDown, ChevronRight 
 } from 'lucide-react';
 import Button from '../ui/Button';
@@ -25,8 +25,6 @@ interface CharacterSheetProps {
 const CharacterSheet = ({ character, onClose, readOnly = false }: CharacterSheetProps) => {
   const [char, setChar] = useState<Character>(character);
   const [isEditing, setIsEditing] = useState(!readOnly);
-  const [editingSkill, setEditingSkill] = useState<string | null>(null);
-  const [skillValue, setSkillValue] = useState<number>(0);
   const [newItemName, setNewItemName] = useState('');
   const [newItemQuantity, setNewItemQuantity] = useState(1);
   const [showSkills, setShowSkills] = useState(true);
@@ -34,7 +32,6 @@ const CharacterSheet = ({ character, onClose, readOnly = false }: CharacterSheet
   const [showPotions, setShowPotions] = useState(true);
   const [showInventory, setShowInventory] = useState(true);
 
-  // Обновление персонажа при изменении
   useEffect(() => {
     setChar(character);
   }, [character]);
@@ -82,14 +79,12 @@ const CharacterSheet = ({ character, onClose, readOnly = false }: CharacterSheet
     }));
   };
 
-  // Расчет общего количества использованных баллов характеристик
   const usedAttributes = char.vitality + char.speed + char.intelligence + char.knowledge + char.focus;
   const maxAttributes = 11;
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
       <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-        {/* Заголовок */}
         <div className="sticky top-0 bg-white z-10 border-b border-gold/20 px-6 py-4 flex justify-between items-center">
           <div className="flex items-center space-x-4">
             <h2 className="font-serif text-2xl font-semibold text-ink">
@@ -121,9 +116,7 @@ const CharacterSheet = ({ character, onClose, readOnly = false }: CharacterSheet
           </div>
         </div>
 
-        {/* Содержимое */}
         <div className="p-6 space-y-6">
-          {/* Основная информация */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="block text-xs font-medium text-brown-dark/60 mb-1">Имя</label>
@@ -193,7 +186,6 @@ const CharacterSheet = ({ character, onClose, readOnly = false }: CharacterSheet
             </div>
           </div>
 
-          {/* Характеристики */}
           <div className="border border-gold/20 rounded-xl p-4">
             <h3 className="font-serif text-lg font-semibold mb-4 flex items-center">
               <Heart className="w-5 h-5 text-gold mr-2" />
@@ -306,7 +298,6 @@ const CharacterSheet = ({ character, onClose, readOnly = false }: CharacterSheet
             </div>
           </div>
 
-          {/* Навыки */}
           <div className="border border-gold/20 rounded-xl p-4">
             <button
               onClick={() => setShowSkills(!showSkills)}
@@ -338,7 +329,6 @@ const CharacterSheet = ({ character, onClose, readOnly = false }: CharacterSheet
             )}
           </div>
 
-          {/* Заклинания */}
           <div className="border border-gold/20 rounded-xl p-4">
             <button
               onClick={() => setShowSpells(!showSpells)}
@@ -402,7 +392,6 @@ const CharacterSheet = ({ character, onClose, readOnly = false }: CharacterSheet
             )}
           </div>
 
-          {/* Зелья */}
           <div className="border border-gold/20 rounded-xl p-4">
             <button
               onClick={() => setShowPotions(!showPotions)}
@@ -466,7 +455,6 @@ const CharacterSheet = ({ character, onClose, readOnly = false }: CharacterSheet
             )}
           </div>
 
-          {/* Инвентарь */}
           <div className="border border-gold/20 rounded-xl p-4">
             <button
               onClick={() => setShowInventory(!showInventory)}
@@ -526,7 +514,6 @@ const CharacterSheet = ({ character, onClose, readOnly = false }: CharacterSheet
             )}
           </div>
 
-          {/* Сюжетные баллы */}
           <div className="border border-gold/20 rounded-xl p-4">
             <h3 className="font-serif text-lg font-semibold flex items-center">
               <Shield className="w-5 h-5 text-gold mr-2" />
@@ -544,7 +531,6 @@ const CharacterSheet = ({ character, onClose, readOnly = false }: CharacterSheet
             </div>
           </div>
 
-          {/* Состояния */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border border-gold/20 rounded-xl p-4">
             <div>
               <h4 className="text-sm font-medium text-brown-dark/60 mb-1">Физическое состояние</h4>
@@ -569,7 +555,6 @@ const CharacterSheet = ({ character, onClose, readOnly = false }: CharacterSheet
           </div>
         </div>
 
-        {/* Кнопки действий */}
         <div className="sticky bottom-0 bg-white border-t border-gold/20 px-6 py-4 flex justify-end space-x-3">
           {isEditing && !readOnly && (
             <Button variant="primary" onClick={handleSave}>
