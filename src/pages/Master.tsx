@@ -2,7 +2,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { 
   LogOut, Users, Map, Settings, BookOpen, Sparkles, 
-  FlaskConical, Dice5, Copy, Check, Eye, Key
+  FlaskConical, Dice5, Copy, Check, Key
 } from 'lucide-react';
 import Button from '../components/ui/Button';
 import CharacterSheet from '../components/character/CharacterSheet';
@@ -13,9 +13,7 @@ import {
   getPlayersSupabase, 
   deleteRoomSupabase,
   subscribeToPlayersSupabase,
-  subscribeToMessagesSupabase,
-  updateRoomStatusSupabase,
-  isSupabaseConnected
+  updateRoomStatusSupabase
 } from '../services/supabase';
 import { useSupabaseChat } from '../hooks/useSupabaseChat';
 import { Character } from '../types/character';
@@ -33,11 +31,9 @@ const Master = () => {
   const [masterName, setMasterName] = useState('');
   const [loading, setLoading] = useState(true);
 
-  // Чат через Supabase
   const userId = `master_${Date.now()}`;
   const { messages, send, sendRoll, sendSystem } = useSupabaseChat(code || '', userId, masterName || 'Мастер');
 
-  // Загрузка данных
   useEffect(() => {
     if (!code) {
       navigate('/');
@@ -47,7 +43,6 @@ const Master = () => {
     const loadData = async () => {
       setLoading(true);
       
-      // Загружаем комнату
       const roomData = await getRoomSupabase(code);
       if (!roomData) {
         navigate('/');
@@ -55,17 +50,14 @@ const Master = () => {
       }
       setRoom(roomData);
 
-      // Загружаем игроков
       const playersData = await getPlayersSupabase(code);
       setPlayers(playersData);
 
-      // Находим мастера
       const master = playersData.find(p => p.role === 'master');
       if (master) {
         setMasterName(master.name);
       }
 
-      // Отправляем системное сообщение
       sendSystem(`👑 Мастер ${master?.name || 'Мастер'} присоединился к игре`);
 
       setLoading(false);
@@ -73,7 +65,6 @@ const Master = () => {
 
     loadData();
 
-    // Подписка на новых игроков
     const playersSubscription = subscribeToPlayersSupabase(code, (payload) => {
       if (payload.eventType === 'INSERT') {
         setPlayers(prev => [...prev, payload.new]);
@@ -83,14 +74,8 @@ const Master = () => {
       }
     });
 
-    // Подписка на сообщения
-    const messagesSubscription = subscribeToMessagesSupabase(code, (newMessage) => {
-      // Сообщения уже обрабатываются в useSupabaseChat
-    });
-
     return () => {
       playersSubscription.unsubscribe();
-      messagesSubscription.unsubscribe();
     };
   }, [code, navigate, sendSystem]);
 
