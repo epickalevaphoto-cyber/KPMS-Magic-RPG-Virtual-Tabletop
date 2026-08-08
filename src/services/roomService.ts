@@ -2,6 +2,7 @@ import { GameRoom, User } from '../types';
 
 const STORAGE_KEY = 'kpms_rooms';
 
+// Загрузка комнат из localStorage
 function loadRooms(): Map<string, GameRoom> {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -15,6 +16,7 @@ function loadRooms(): Map<string, GameRoom> {
   return new Map();
 }
 
+// Сохранение комнат в localStorage
 function saveRooms(rooms: Map<string, GameRoom>): void {
   try {
     const data = Object.fromEntries(rooms);
@@ -26,6 +28,7 @@ function saveRooms(rooms: Map<string, GameRoom>): void {
 
 let rooms: Map<string, GameRoom> = loadRooms();
 
+// Генерация уникального 6-значного кода
 function generateRoomCode(): string {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
   let code = '';
@@ -35,9 +38,9 @@ function generateRoomCode(): string {
   return code;
 }
 
+// Создание новой комнаты
 export function createRoom(masterName: string, roomName: string = 'Новая игра', password: string = ''): GameRoom {
   let code = generateRoomCode();
-  
   while (rooms.has(code)) {
     code = generateRoomCode();
   }
@@ -61,36 +64,18 @@ export function createRoom(masterName: string, roomName: string = 'Новая и
 
   rooms.set(code, room);
   saveRooms(rooms);
-  console.log('✅ Room created:', { code, room });
   return room;
 }
 
+// Присоединение к комнате
 export function joinRoom(code: string, password: string, playerName: string): GameRoom | null {
   const room = rooms.get(code.toUpperCase());
+  if (!room) return null;
+  if (room.status === 'finished') return null;
+  if (room.password && room.password !== password.trim()) return null;
   
-  console.log('🔍 Attempting to join room:', { code: code.toUpperCase(), roomExists: !!room });
-  
-  if (!room) {
-    console.log('❌ Room not found');
-    return null;
-  }
-
-  if (room.status === 'finished') {
-    console.log('❌ Room is finished');
-    return null;
-  }
-
-  // Проверяем пароль
-  if (room.password && room.password !== password.trim()) {
-    console.log('❌ Wrong password');
-    return null;
-  }
-
   const existingPlayer = room.players.find(p => p.name === playerName.trim());
-  if (existingPlayer) {
-    console.log('❌ Player with same name already exists:', playerName);
-    return null;
-  }
+  if (existingPlayer) return null;
 
   const newPlayer: User = {
     id: `player_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
@@ -100,14 +85,11 @@ export function joinRoom(code: string, password: string, playerName: string): Ga
 
   room.players.push(newPlayer);
   saveRooms(rooms);
-  console.log('✅ Player joined:', { player: newPlayer, totalPlayers: room.players.length });
   return room;
 }
 
 export function getRoom(code: string): GameRoom | null {
-  const room = rooms.get(code.toUpperCase()) || null;
-  console.log('🔍 Getting room:', { code: code.toUpperCase(), found: !!room });
-  return room;
+  return rooms.get(code.toUpperCase()) || null;
 }
 
 export function getRooms(): GameRoom[] {
@@ -116,36 +98,26 @@ export function getRooms(): GameRoom[] {
 
 export function removeRoom(code: string): boolean {
   const result = rooms.delete(code.toUpperCase());
-  if (result) {
-    saveRooms(rooms);
-    console.log('🗑️ Room removed:', code);
-  }
+  if (result) saveRooms(rooms);
   return result;
 }
 
 export function clearAllRooms(): void {
   rooms.clear();
   saveRooms(rooms);
-  console.log('🗑️ All rooms cleared');
 }
 
 export function removeOldRooms(maxAgeHours: number = 24): number {
   const now = Date.now();
   const maxAge = maxAgeHours * 60 * 60 * 1000;
   let removed = 0;
-  
   for (const [code, room] of rooms) {
     if (now - room.createdAt > maxAge) {
       rooms.delete(code);
       removed++;
     }
   }
-  
-  if (removed > 0) {
-    saveRooms(rooms);
-    console.log(`🗑️ Removed ${removed} old rooms`);
-  }
-  
+  if (removed > 0) saveRooms(rooms);
   return removed;
 }
 
@@ -161,7 +133,6 @@ export function getPlayerCount(code: string): number {
 export function updateRoomStatus(code: string, status: 'waiting' | 'playing' | 'finished'): boolean {
   const room = rooms.get(code.toUpperCase());
   if (!room) return false;
-  
   room.status = status;
   saveRooms(rooms);
   return true;
@@ -170,7 +141,6 @@ export function updateRoomStatus(code: string, status: 'waiting' | 'playing' | '
 export function updateRoomPassword(code: string, newPassword: string): boolean {
   const room = rooms.get(code.toUpperCase());
   if (!room) return false;
-  
   room.password = newPassword.trim() || '';
   saveRooms(rooms);
   return true;
