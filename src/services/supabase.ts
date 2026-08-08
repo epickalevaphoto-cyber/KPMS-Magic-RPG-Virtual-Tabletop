@@ -4,15 +4,12 @@ import { createClient } from '@supabase/supabase-js';
 // 1. ПОДКЛЮЧЕНИЕ К SUPABASE
 // ============================================
 
-// Загружаем переменные окружения
-const supabaseUrl = (import.meta as any).env?.VITE_SUPABASE_URL || '';
-const supabaseAnonKey = (import.meta as any).env?.VITE_SUPABASE_ANON_KEY || '';
+import { createClient } from '@supabase/supabase-js';
 
-// Проверяем, что переменные заданы
-const isConnected = Boolean(supabaseUrl && supabaseAnonKey);
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
-// Создаем клиент Supabase (или null, если нет переменных)
-export const supabase = isConnected
+export const supabase = supabaseUrl && supabaseAnonKey
   ? createClient(supabaseUrl, supabaseAnonKey)
   : null;
 
