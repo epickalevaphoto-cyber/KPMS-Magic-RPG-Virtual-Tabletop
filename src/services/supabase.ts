@@ -5,9 +5,19 @@ import { createClient } from '@supabase/supabase-js';
 // 1. ПОДКЛЮЧЕНИЕ К SUPABASE
 // ============================================
 
+// Используем declare для типов окружения
+declare global {
+  interface ImportMeta {
+    env: {
+      VITE_SUPABASE_URL?: string;
+      VITE_SUPABASE_ANON_KEY?: string;
+    };
+  }
+}
+
 // Загружаем переменные окружения
-const supabaseUrl = import.meta.env?.VITE_SUPABASE_URL || '';
-const supabaseAnonKey = import.meta.env?.VITE_SUPABASE_ANON_KEY || '';
+const supabaseUrl = (import.meta as any).env?.VITE_SUPABASE_URL || '';
+const supabaseAnonKey = (import.meta as any).env?.VITE_SUPABASE_ANON_KEY || '';
 
 // Проверяем, что переменные заданы
 const isConnected = Boolean(supabaseUrl && supabaseAnonKey);
@@ -18,7 +28,7 @@ export const supabase = isConnected
   : null;
 
 // ============================================
-// 2. ТИПЫ ДАННЫХ (совместимые с Chat компонентом)
+// 2. ТИПЫ ДАННЫХ
 // ============================================
 
 export interface Room {
@@ -40,16 +50,15 @@ export interface Player {
   joined_at: string;
 }
 
-// Тип для чата (совместим с Chat.tsx)
 export interface ChatMessage {
   id: string;
-  userId: string;        // соответствует user_id в БД
-  userName: string;      // соответствует user_name в БД
+  userId: string;
+  userName: string;
   text: string;
   type: 'message' | 'roll' | 'system';
-  timestamp: number;     // соответствует created_at
-  room_code?: string;    // опционально
-  created_at?: string;   // из БД
+  timestamp: number;
+  room_code?: string;
+  created_at?: string;
 }
 
 export interface Roll {
@@ -316,7 +325,6 @@ export async function sendMessageSupabase(
 
     if (error) throw error;
     
-    // Преобразуем в нужный формат
     return {
       id: data.id,
       userId: data.user_id,
@@ -346,8 +354,7 @@ export async function getMessagesSupabase(roomCode: string): Promise<ChatMessage
 
     if (error) throw error;
     
-    // Преобразуем в нужный формат
-    return (data || []).map(msg => ({
+    return (data || []).map((msg: any) => ({
       id: msg.id,
       userId: msg.user_id,
       userName: msg.user_name,
@@ -386,7 +393,9 @@ export function subscribeToRoomSupabase(
         table: 'rooms',
         filter: `code=eq.${code.toUpperCase()}`
       },
-      onUpdate
+      (payload: any) => {
+        onUpdate(payload);
+      }
     )
     .subscribe();
 
@@ -416,7 +425,9 @@ export function subscribeToPlayersSupabase(
         table: 'players',
         filter: `room_code=eq.${code.toUpperCase()}`
       },
-      onUpdate
+      (payload: any) => {
+        onUpdate(payload);
+      }
     )
     .subscribe();
 
@@ -446,7 +457,7 @@ export function subscribeToMessagesSupabase(
         table: 'chat_messages',
         filter: `room_code=eq.${roomCode.toUpperCase()}`
       },
-      (payload) => {
+      (payload: any) => {
         if (payload.new) {
           const msg: ChatMessage = {
             id: payload.new.id,
@@ -527,4 +538,33 @@ ALTER TABLE rooms REPLICA IDENTITY FULL;
 ALTER TABLE players REPLICA IDENTITY FULL;
 ALTER TABLE chat_messages REPLICA IDENTITY FULL;
 ALTER TABLE rolls REPLICA IDENTITY FULL;
+
+-- Создаем индексы
+CREATE INDEX IF NOT EXISTS idx_rooms_code ON rooms(code);
+CREATE INDEX IF NOT EXISTS idx_players_room_code ON players(room_code);
+CREATE INDEX IF NOT EXISTS idx_chat_messages_room_code ON chat_messages(room_code);
+CREATE INDEX IF NOT EXISTS idx_rolls_room_code ON rolls(room_code);
 `;
+
+// ============================================
+// 8. ЭКСПОРТ
+// ============================================
+
+export default {
+  supabase,
+  isSupabaseConnected,
+  getSupabaseStatus,
+  createRoomSupabase,
+  joinRoomSupabase,
+  getRoomSupabase,
+  getRoomsSupabase,
+  getPlayersSupabase,
+  deleteRoomSupabase,
+  updateRoomStatusSupabase,
+  sendMessageSupabase,
+  getMessagesSupabase,
+  subscribeToRoomSupabase,
+  subscribeToPlayersSupabase,
+  subscribeToMessagesSupabase,
+  SQL_TABLES
+};
