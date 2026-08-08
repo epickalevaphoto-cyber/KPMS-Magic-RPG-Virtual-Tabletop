@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   LogOut, Users, Map, Settings, BookOpen, Sparkles, 
   FlaskConical, Dice5, Copy, Check, Eye 
@@ -16,9 +16,22 @@ const Master = () => {
   const [copied, setCopied] = useState(false);
   const [selectedCharacter, setSelectedCharacter] = useState<Character | null>(null);
   const [showCharacterSheet, setShowCharacterSheet] = useState(false);
+  const [room, setRoom] = useState(getRoom(code || ''));
 
-  const room = code ? getRoom(code) : null;
+  // Проверяем комнату при загрузке и при изменении кода
+  useEffect(() => {
+    if (code) {
+      const currentRoom = getRoom(code);
+      setRoom(currentRoom);
+      
+      // Если комнаты нет, перенаправляем на главную
+      if (!currentRoom) {
+        navigate('/');
+      }
+    }
+  }, [code, navigate]);
 
+  // Если комнаты нет, показываем сообщение
   if (!room) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-krem">
@@ -32,8 +45,6 @@ const Master = () => {
     );
   }
 
-  const characters = getCharactersByRoom(room.id);
-
   const handleCopyCode = () => {
     navigator.clipboard.writeText(room.code);
     setCopied(true);
@@ -46,6 +57,8 @@ const Master = () => {
       navigate('/');
     }
   };
+
+  const characters = getCharactersByRoom(room.id);
 
   return (
     <div className="flex flex-col h-screen bg-krem">
