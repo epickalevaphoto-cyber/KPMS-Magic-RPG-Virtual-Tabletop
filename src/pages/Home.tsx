@@ -41,18 +41,15 @@ const Home = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const handleCreateRoom = async () => {
-    if (!masterName.trim()) {
-      setError('Введите ваше имя');
-      return;
-    }
-
-    setLoading(true);
-    const { room, error: createError } = await createRoomSupabase(
-      masterName.trim(),
-      roomName.trim() || 'Новая игра',
-      roomPassword.trim()
-    );
+ const handleCreateRoom = async () => {
+  // ...
+  const { room, error: createError } = await createRoomSupabase(
+    masterName.trim(),
+    roomName.trim() || 'Новая игра',
+    roomPassword.trim()
+  );
+  // ...
+}
 
     setLoading(false);
 
