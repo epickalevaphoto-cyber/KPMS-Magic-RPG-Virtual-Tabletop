@@ -7,14 +7,7 @@ import { createRoom, joinRoom, getRooms, removeRoom, clearAllRooms, removeOldRoo
 
 // ⬇️ ИЗОБРАЖЕНИЕ ДЛЯ ФОНА ⬇️
 // ВСТАВЬТЕ ССЫЛКУ НА ВАШЕ ИЗОБРАЖЕНИЕ ЗДЕСЬ:
-const BACKGROUND_IMAGE = 'https://i.pinimg.com/1200x/ea/46/c3/ea46c3575dcdd0645a20408c366ff700.jpg';
-// Другие варианты фонов:
-// Замок: https://images.unsplash.com/photo-1519681393784-d120267933ba?w=1920&q=80
-// Звезды: https://images.unsplash.com/photo-1506703719100-a0f3a48c6f1a?w=1920&q=80
-// Лес: https://images.unsplash.com/photo-1518495973542-4542c06a5843?w=1920&q=80
-// Волшебный лес: https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1920&q=80
-// Свечи: https://images.unsplash.com/photo-1519055548599-6d4d129508c4?w=1920&q=80
-// Туманный замок: https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=1920&q=80
+const BACKGROUND_IMAGE = 'https://i.pinimg.com/1200x/45/61/46/456146dc3b37b62b8f3c23cb903cf751.jpg';
 
 const Home = () => {
   const navigate = useNavigate();
@@ -118,7 +111,7 @@ const Home = () => {
         className="absolute inset-0 w-full h-full bg-cover bg-center bg-no-repeat"
         style={{
           backgroundImage: `url("${BACKGROUND_IMAGE}")`,
-          filter: 'blur(10px)',
+          filter: 'blur(6px)',
           transform: 'scale(1.05)',
         }}
       />
@@ -417,9 +410,6 @@ const Home = () => {
       )}
     </div>
   );
-};
-
-export default Home;
 };
 
 export default Home;
