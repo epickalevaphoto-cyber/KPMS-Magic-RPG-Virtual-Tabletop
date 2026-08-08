@@ -8,11 +8,10 @@ import {
   joinRoomSupabase, 
   getRoomsSupabase, 
   deleteRoomSupabase,
-  isSupabaseConnected,
   getSupabaseStatus
 } from '../services/supabase';
 
-const BACKGROUND_IMAGE = 'https://images.unsplash.com/photo-1519681393784-d120267933ba?w=1920&q=80';
+const BACKGROUND_IMAGE = 'https://i.pinimg.com/1200x/45/61/46/456146dc3b37b62b8f3c23cb903cf751.jpg';
 
 const Home = () => {
   const navigate = useNavigate();
@@ -29,9 +28,8 @@ const Home = () => {
   const [rooms, setRooms] = useState<any[]>([]);
   const [showConfirmDelete, setShowConfirmDelete] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [supabaseStatus, setSupabaseStatus] = useState(getSupabaseStatus());
+  const supabaseStatus = getSupabaseStatus();
 
-  // Загрузка комнат
   useEffect(() => {
     const loadRooms = async () => {
       const allRooms = await getRoomsSupabase();
@@ -39,7 +37,6 @@ const Home = () => {
     };
     loadRooms();
     
-    // Обновляем список каждые 10 секунд
     const interval = setInterval(loadRooms, 10000);
     return () => clearInterval(interval);
   }, []);
@@ -128,7 +125,6 @@ const Home = () => {
       <div className="absolute inset-0 bg-soft-ivory/75 backdrop-blur-[2px]" />
 
       <div className="text-center max-w-3xl mx-auto px-4 py-12 relative z-10">
-        {/* Статус Supabase */}
         <div className="mb-4 text-xs">
           <span className={`px-2 py-1 rounded-full ${
             supabaseStatus.connected 
@@ -188,7 +184,6 @@ const Home = () => {
           </Card>
         </div>
 
-        {/* Список комнат */}
         <div className="mt-6 flex flex-col items-center space-y-2">
           <button
             onClick={() => setShowRoomList(!showRoomList)}
@@ -265,7 +260,7 @@ const Home = () => {
         </div>
       </div>
 
-      {/* Модальное окно создания комнаты */}
+      {/* Модальные окна... (остаются без изменений) */}
       {showCreateModal && (
         <div className="fixed inset-0 bg-dark-chocolate/60 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setShowCreateModal(false)}>
           <div className="bg-soft-ivory rounded-2xl shadow-2xl max-w-md w-full p-6 transform transition-all" onClick={e => e.stopPropagation()}>
@@ -327,7 +322,6 @@ const Home = () => {
         </div>
       )}
 
-      {/* Модальное окно присоединения */}
       {showJoinModal && (
         <div className="fixed inset-0 bg-dark-chocolate/60 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setShowJoinModal(false)}>
           <div className="bg-soft-ivory rounded-2xl shadow-2xl max-w-md w-full p-6" onClick={e => e.stopPropagation()}>
@@ -389,7 +383,6 @@ const Home = () => {
         </div>
       )}
 
-      {/* Модальное окно подтверждения удаления */}
       {showConfirmDelete && (
         <div className="fixed inset-0 bg-dark-chocolate/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-soft-ivory rounded-2xl shadow-2xl max-w-md w-full p-6">
