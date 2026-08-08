@@ -129,9 +129,7 @@ export function distributeAttributes(
   return updateCharacter(characterId, { vitality, speed, intelligence, knowledge, focus });
 }
 
-export function deleteCharacter(id: string): boolean {
-  return characters.delete(id);
-}
+// Удаление персонажа (только одна функция)
 export function deleteCharacter(id: string): boolean {
   return characters.delete(id);
 }
