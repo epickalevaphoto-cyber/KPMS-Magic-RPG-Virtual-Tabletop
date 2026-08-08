@@ -5,8 +5,20 @@ import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
 import { createRoom, joinRoom, getRooms, removeRoom, clearAllRooms, removeOldRooms } from '../services/roomService';
 
-// Фоновое изображение
 const BACKGROUND_IMAGE = 'https://i.pinimg.com/1200x/45/61/46/456146dc3b37b62b8f3c23cb903cf751.jpg';
+
+// Получаем ID мастера из localStorage (устанавливается при создании комнаты)
+const getMasterId = (): string | null => {
+  return localStorage.getItem('kpms_master_id');
+};
+
+const setMasterId = (id: string): void => {
+  localStorage.setItem('kpms_master_id', id);
+};
+
+const clearMasterId = (): void => {
+  localStorage.removeItem('kpms_master_id');
+};
 
 const Home = () => {
   const navigate = useNavigate();
@@ -22,6 +34,7 @@ const Home = () => {
   const [error, setError] = useState('');
   const [rooms, setRooms] = useState<any[]>([]);
   const [showConfirmDelete, setShowConfirmDelete] = useState<string | null>(null);
+  const [currentMasterId, setCurrentMasterId] = useState<string | null>(getMasterId());
 
   useEffect(() => {
     const loadRooms = () => {
@@ -41,6 +54,11 @@ const Home = () => {
     }
 
     const room = createRoom(masterName.trim(), roomName.trim() || 'Новая игра', roomPassword.trim());
+    
+    // Сохраняем ID мастера
+    setMasterId(room.masterId);
+    setCurrentMasterId(room.masterId);
+    
     setShowCreateModal(false);
     setError('');
     navigate(`/master/${room.code}`);
@@ -69,9 +87,9 @@ const Home = () => {
     navigate(`/player/${room.code}`);
   };
 
-  const handleJoinFromList = (code: string, password: string) => {
+  const handleJoinFromList = (code: string) => {
     setRoomCode(code);
-    setJoinPassword(password);
+    setJoinPassword(''); // Очищаем пароль, чтобы игрок ввел его сам
     setShowRoomList(false);
     setShowJoinModal(true);
   };
@@ -87,13 +105,27 @@ const Home = () => {
   };
 
   const handleClearAllRooms = () => {
+    // Только мастер может удалить все комнаты
+    if (!currentMasterId) {
+      alert('Только мастер может удалять комнаты');
+      return;
+    }
+    
     if (window.confirm('Вы уверены, что хотите удалить ВСЕ комнаты? Это действие нельзя отменить.')) {
       clearAllRooms();
       setRooms(getRooms());
+      clearMasterId();
+      setCurrentMasterId(null);
     }
   };
 
   const handleRemoveOldRooms = () => {
+    // Только мастер может удалять старые комнаты
+    if (!currentMasterId) {
+      alert('Только мастер может удалять комнаты');
+      return;
+    }
+    
     const removed = removeOldRooms(24);
     setRooms(getRooms());
     if (removed > 0) {
@@ -103,9 +135,14 @@ const Home = () => {
     }
   };
 
+  // Проверяем, может ли пользователь удалить комнату
+  const canDeleteRoom = (room: any): boolean => {
+    // Только мастер, создавший комнату, может ее удалить
+    return currentMasterId === room.masterId;
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center relative overflow-hidden bg-pattern">
-      {/* Фоновое изображение с размытием */}
       <div 
         className="absolute inset-0 w-full h-full bg-cover bg-center bg-no-repeat"
         style={{
@@ -115,10 +152,8 @@ const Home = () => {
         }}
       />
       
-      {/* Прозрачный слой поверх фона */}
       <div className="absolute inset-0 bg-soft-ivory/75 backdrop-blur-[2px]" />
 
-      {/* Контент */}
       <div className="text-center max-w-3xl mx-auto px-4 py-12 relative z-10">
         <div className="mb-12">
           <div className="flex items-center justify-center mb-4">
@@ -178,7 +213,7 @@ const Home = () => {
             <span>Активные комнаты ({rooms.length})</span>
           </button>
 
-          {rooms.length > 0 && (
+          {rooms.length > 0 && currentMasterId && (
             <div className="flex items-center space-x-4 text-xs">
               <button
                 onClick={handleRemoveOldRooms}
@@ -206,48 +241,58 @@ const Home = () => {
               <p className="text-sm text-walnut/40">Нет активных комнат</p>
             ) : (
               <div className="space-y-2">
-                {rooms.map((room, index) => (
-                  <div key={index} className="flex items-center justify-between bg-vanilla-cream/30 rounded-lg px-4 py-2 hover:bg-vanilla-cream/50 transition-colors">
-                    <div className="text-left">
-                      <div className="flex items-center space-x-2">
-                        <span className="font-mono font-bold text-caramel">{room.code}</span>
-                        {room.password ? (
-                          <Lock className="w-3 h-3 text-amber-500" />
-                        ) : (
-                          <Unlock className="w-3 h-3 text-green-500" />
-                        )}
-                        <span className="text-xs text-walnut/40">
-                          {new Date(room.createdAt).toLocaleTimeString()}
-                        </span>
+                {rooms.map((room, index) => {
+                  const isMaster = canDeleteRoom(room);
+                  return (
+                    <div key={index} className="flex items-center justify-between bg-vanilla-cream/30 rounded-lg px-4 py-2 hover:bg-vanilla-cream/50 transition-colors">
+                      <div className="text-left">
+                        <div className="flex items-center space-x-2">
+                          <span className="font-mono font-bold text-caramel">{room.code}</span>
+                          {room.password ? (
+                            <Lock className="w-3 h-3 text-amber-500" />
+                          ) : (
+                            <Unlock className="w-3 h-3 text-green-500" />
+                          )}
+                          {isMaster && (
+                            <span className="text-[10px] text-caramel/60 bg-caramel/10 px-1.5 py-0.5 rounded-full">
+                              👑 Мастер
+                            </span>
+                          )}
+                          <span className="text-xs text-walnut/40">
+                            {new Date(room.createdAt).toLocaleTimeString()}
+                          </span>
+                        </div>
+                        <div className="text-xs text-walnut/60">{room.name}</div>
+                        <div className="text-xs text-walnut/40">Игроков: {room.players.length}</div>
                       </div>
-                      <div className="text-xs text-walnut/60">{room.name}</div>
-                      <div className="text-xs text-walnut/40">Игроков: {room.players.length}</div>
+                      <div className="flex items-center space-x-2">
+                        <button
+                          onClick={() => copyCode(room.code)}
+                          className="p-1 text-walnut/40 hover:text-caramel transition-colors"
+                          title="Скопировать код"
+                        >
+                          <Copy className="w-4 h-4" />
+                        </button>
+                        <Button
+                          variant="primary"
+                          size="sm"
+                          onClick={() => handleJoinFromList(room.code)}
+                        >
+                          Войти
+                        </Button>
+                        {isMaster && (
+                          <button
+                            onClick={() => setShowConfirmDelete(room.code)}
+                            className="p-1 text-red-400 hover:text-red-600 transition-colors"
+                            title="Удалить комнату"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <button
-                        onClick={() => copyCode(room.code)}
-                        className="p-1 text-walnut/40 hover:text-caramel transition-colors"
-                        title="Скопировать код"
-                      >
-                        <Copy className="w-4 h-4" />
-                      </button>
-                      <Button
-                        variant="primary"
-                        size="sm"
-                        onClick={() => handleJoinFromList(room.code, room.password)}
-                      >
-                        Войти
-                      </Button>
-                      <button
-                        onClick={() => setShowConfirmDelete(room.code)}
-                        className="p-1 text-red-400 hover:text-red-600 transition-colors"
-                        title="Удалить комнату"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
@@ -298,7 +343,7 @@ const Home = () => {
                   Пароль комнаты (опционально)
                 </label>
                 <input
-                  type="text"
+                  type="password"
                   value={roomPassword}
                   onChange={(e) => setRoomPassword(e.target.value)}
                   placeholder="Оставьте пустым для открытой комнаты"
@@ -361,7 +406,7 @@ const Home = () => {
                   Пароль комнаты
                 </label>
                 <input
-                  type="text"
+                  type="password"
                   value={joinPassword}
                   onChange={(e) => setJoinPassword(e.target.value)}
                   placeholder="Введите пароль (если установлен)"
