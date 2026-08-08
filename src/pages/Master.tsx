@@ -24,7 +24,7 @@ const Master = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [masterName, setMasterName] = useState('');
 
-  const { messages, sendMessage, sendRollMessage, sendSystemMessage } = useChat(code || '', masterName || 'Мастер');
+  const { messages, sendMessage, sendRollMessage } = useChat(code || '', masterName || 'Мастер');
 
   useEffect(() => {
     if (code) {
