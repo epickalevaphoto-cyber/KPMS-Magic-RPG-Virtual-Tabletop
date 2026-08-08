@@ -22,8 +22,6 @@ const Player = () => {
   const [showCharacterList, setShowCharacterList] = useState(false);
 
   const room = code ? getRoom(code) : null;
-
-  // Используем фиктивный userId для демонстрации
   const userId = 'player_1';
 
   if (!room) {
@@ -144,7 +142,6 @@ const Player = () => {
         </button>
       </footer>
 
-      {/* Список персонажей */}
       {showCharacterList && (
         <div className="absolute right-4 top-16 bg-white rounded-xl shadow-xl border border-gold/20 p-4 min-w-64 z-10">
           <h4 className="font-serif text-sm font-semibold mb-3">Мои персонажи</h4>
@@ -179,7 +176,6 @@ const Player = () => {
         </div>
       )}
 
-      {/* Чарлист */}
       {showCharacterSheet && selectedCharacter && (
         <CharacterSheet
           character={selectedCharacter}
