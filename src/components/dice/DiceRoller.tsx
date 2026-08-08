@@ -35,7 +35,6 @@ const DiceRoller = ({ onRoll, onClose, userId = 'system', userName = 'Игрок
   const [showHistory, setShowHistory] = useState(false);
   const [history, setHistory] = useState(getRollHistory());
   
-  // Для проверки (по правилам Гарри Поттер)
   const [characteristic, setCharacteristic] = useState(3);
   const [skill, setSkill] = useState(2);
   const [difficulty, setDifficulty] = useState(12);
@@ -45,7 +44,6 @@ const DiceRoller = ({ onRoll, onClose, userId = 'system', userName = 'Игрок
     let roll;
     
     if (showCheckMode) {
-      // Проверка всегда использует d10 по правилам Гарри Поттер
       roll = rollCheck(characteristic, skill, 0, difficulty);
     } else if (diceType === 'd100') {
       roll = rollD100(modifier);
@@ -74,17 +72,6 @@ const DiceRoller = ({ onRoll, onClose, userId = 'system', userName = 'Игрок
     }
   };
 
-  // Получаем название кубика для отображения
-  const getDiceLabel = (type: string) => {
-    switch (type) {
-      case 'd6': return 'd6 (стандартный)';
-      case 'd10': return 'd10 (Гарри Поттер)';
-      case 'd100': return 'd100 (процент)';
-      default: return type;
-    }
-  };
-
-  // Получаем описание кубика
   const getDiceDescription = (type: string) => {
     switch (type) {
       case 'd6': return 'Классический шестигранный кубик';
@@ -107,7 +94,6 @@ const DiceRoller = ({ onRoll, onClose, userId = 'system', userName = 'Игрок
           </button>
         </div>
 
-        {/* Переключение режимов */}
         <div className="flex space-x-2 mb-4">
           <button
             onClick={() => setShowCheckMode(false)}
@@ -132,7 +118,6 @@ const DiceRoller = ({ onRoll, onClose, userId = 'system', userName = 'Игрок
         </div>
 
         {!showCheckMode ? (
-          /* Простой бросок */
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-dark-chocolate/80 mb-1">Тип кубика</label>
@@ -225,7 +210,6 @@ const DiceRoller = ({ onRoll, onClose, userId = 'system', userName = 'Игрок
             </div>
           </div>
         ) : (
-          /* Проверка (по правилам Гарри Поттер) */
           <div className="space-y-4">
             <div className="bg-caramel/10 p-3 rounded-lg border border-caramel/20">
               <p className="text-sm font-medium text-dark-chocolate">📖 Проверка по правилам Гарри Поттер</p>
@@ -277,7 +261,6 @@ const DiceRoller = ({ onRoll, onClose, userId = 'system', userName = 'Игрок
           Бросить!
         </Button>
 
-        {/* История бросков */}
         <div className="mt-4">
           <button
             onClick={() => setShowHistory(!showHistory)}
