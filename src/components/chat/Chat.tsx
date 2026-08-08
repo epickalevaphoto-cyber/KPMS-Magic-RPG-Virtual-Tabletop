@@ -28,10 +28,8 @@ const Chat = ({
 }: ChatProps) => {
   const [inputText, setInputText] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const chatContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Автоскролл вниз при новых сообщениях
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
@@ -75,16 +73,13 @@ const Chat = ({
 
   return (
     <div className={`flex flex-col bg-white/40 backdrop-blur-sm rounded-xl border border-caramel/20 overflow-hidden ${className}`}>
-      {/* Заголовок чата */}
       <div className="flex items-center space-x-2 px-4 py-2 border-b border-caramel/20 bg-soft-ivory/50">
         <MessageSquare className="w-4 h-4 text-caramel" />
         <span className="text-sm font-medium text-dark-chocolate">Чат</span>
         <span className="text-xs text-walnut/40 ml-auto">{messages.length} сообщений</span>
       </div>
 
-      {/* Сообщения */}
       <div 
-        ref={chatContainerRef}
         className="flex-1 overflow-y-auto p-3 space-y-1.5"
         style={{ maxHeight }}
       >
@@ -119,7 +114,6 @@ const Chat = ({
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Ввод */}
       <div className="border-t border-caramel/20 p-3 bg-soft-ivory/50">
         <div className="flex space-x-2">
           <input
