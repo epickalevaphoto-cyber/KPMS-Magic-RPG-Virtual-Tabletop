@@ -16,27 +16,32 @@ const Master = () => {
   const [copied, setCopied] = useState(false);
   const [selectedCharacter, setSelectedCharacter] = useState<Character | null>(null);
   const [showCharacterSheet, setShowCharacterSheet] = useState(false);
-  const [room, setRoom] = useState(getRoom(code || ''));
+  const [room, setRoom] = useState<any>(null);
 
-  // Проверяем комнату при загрузке и при изменении кода
   useEffect(() => {
+    console.log('🔍 Master component mounted with code:', code);
     if (code) {
       const currentRoom = getRoom(code);
+      console.log('🔍 Retrieved room:', currentRoom);
       setRoom(currentRoom);
       
-      // Если комнаты нет, перенаправляем на главную
       if (!currentRoom) {
+        console.log('❌ Room not found, navigating to home');
         navigate('/');
       }
+    } else {
+      console.log('❌ No code provided, navigating to home');
+      navigate('/');
     }
   }, [code, navigate]);
 
-  // Если комнаты нет, показываем сообщение
   if (!room) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-krem">
         <div className="text-center">
           <p className="text-2xl font-serif mb-4">Комната не найдена</p>
+          <p className="text-sm text-brown-dark/40 mb-4">Код: {code || 'не указан'}</p>
+          <p className="text-xs text-brown-dark/30 mb-4">Убедитесь, что вы создали комнату</p>
           <Button variant="primary" onClick={() => navigate('/')}>
             Вернуться на главную
           </Button>
@@ -124,6 +129,7 @@ const Master = () => {
               <p className="font-serif text-2xl">{room.name}</p>
               <p className="text-sm">Карта Мастера</p>
               <p className="text-xs mt-2 text-brown-dark/20">Код комнаты: {room.code}</p>
+              <p className="text-xs mt-1 text-brown-dark/20">Передайте код игрокам</p>
             </div>
           </div>
           
@@ -133,7 +139,7 @@ const Master = () => {
               <span className="text-xs font-normal text-brown-dark/40">{characters.length} персонажей</span>
             </p>
             <div className="space-y-2">
-              {room.players.map((player, index) => {
+              {room.players.map((player: any, index: number) => {
                 const char = characters.find(c => c.userId === player.id);
                 return (
                   <div key={index} className="flex items-center justify-between text-xs">
