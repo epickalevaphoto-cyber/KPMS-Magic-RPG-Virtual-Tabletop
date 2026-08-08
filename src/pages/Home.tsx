@@ -1,10 +1,9 @@
-import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Wand2, Users } from 'lucide-react';
 import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
 
-const Home: React.FC = () => {
+const Home = () => {
   const navigate = useNavigate();
 
   return (
