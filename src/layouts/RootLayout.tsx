@@ -1,7 +1,6 @@
-import React from 'react';
 import { Outlet } from 'react-router-dom';
 
-const RootLayout: React.FC = () => {
+const RootLayout = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Outlet />
