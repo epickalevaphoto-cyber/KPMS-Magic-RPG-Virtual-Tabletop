@@ -2,10 +2,13 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { 
   LogOut, Users, Map, Settings, BookOpen, Sparkles, 
-  FlaskConical, Dice5, Copy, Check, Eye, Key 
+  FlaskConical, Dice5, Copy, Check, Eye, Key, MessageSquare
 } from 'lucide-react';
 import Button from '../components/ui/Button';
 import CharacterSheet from '../components/character/CharacterSheet';
+import DiceRoller from '../components/dice/DiceRoller';
+import Chat from '../components/chat/Chat';
+import { useChat } from '../hooks/useChat';
 import { getRoom, removeRoom } from '../services/roomService';
 import { getCharactersByRoom } from '../services/characterService';
 import { Character } from '../types/character';
@@ -16,8 +19,13 @@ const Master = () => {
   const [copied, setCopied] = useState(false);
   const [selectedCharacter, setSelectedCharacter] = useState<Character | null>(null);
   const [showCharacterSheet, setShowCharacterSheet] = useState(false);
+  const [showDiceRoller, setShowDiceRoller] = useState(false);
   const [room, setRoom] = useState<any>(null);
   const [showPassword, setShowPassword] = useState(false);
+  const [masterName, setMasterName] = useState('');
+
+  // Чат
+  const { messages, sendMessage, sendRollMessage, sendSystemMessage } = useChat(code || '', masterName || 'Мастер');
 
   useEffect(() => {
     if (code) {
@@ -25,14 +33,20 @@ const Master = () => {
       setRoom(currentRoom);
       
       if (!currentRoom) {
-        // Если комнаты нет, очищаем мастер-статус
         localStorage.removeItem('kpms_master_id');
         navigate('/');
+      } else {
+        const master = currentRoom.players.find(p => p.role === 'master');
+        if (master) {
+          setMasterName(master.name);
+        }
+        // Отправляем системное сообщение о входе
+        sendSystemMessage(`👑 Мастер ${master?.name || 'Мастер'} присоединился к игре`);
       }
     } else {
       navigate('/');
     }
-  }, [code, navigate]);
+  }, [code, navigate, sendSystemMessage]);
 
   if (!room) {
     return (
@@ -55,11 +69,15 @@ const Master = () => {
 
   const handleEndGame = () => {
     if (window.confirm('Вы уверены, что хотите завершить игру?')) {
+      sendSystemMessage('🏁 Игра завершена мастером');
       removeRoom(room.code);
-      // Очищаем мастер-статус при завершении игры
       localStorage.removeItem('kpms_master_id');
       navigate('/');
     }
+  };
+
+  const handleRoll = (text: string) => {
+    sendRollMessage(text);
   };
 
   const characters = getCharactersByRoom(room.id);
@@ -107,6 +125,7 @@ const Master = () => {
       </header>
 
       <div className="flex-1 flex gap-2 p-2 overflow-hidden">
+        {/* Левая панель */}
         <div className="w-16 bg-soft-ivory/80 backdrop-blur-sm rounded-xl border border-caramel/20 flex flex-col items-center py-4 space-y-4 shadow-lg">
           <button className="p-2 rounded-lg bg-caramel/10 text-caramel hover:bg-caramel/20 transition-colors" title="Игроки">
             <Users className="w-6 h-6" />
@@ -127,11 +146,16 @@ const Master = () => {
             <Settings className="w-6 h-6" />
           </button>
           <div className="flex-1"></div>
-          <button className="p-2 rounded-lg bg-caramel text-soft-ivory hover:bg-walnut transition-colors shadow-lg" title="Бросок">
+          <button 
+            onClick={() => setShowDiceRoller(true)}
+            className="p-2 rounded-lg bg-caramel text-soft-ivory hover:bg-walnut transition-colors shadow-lg" 
+            title="Бросок"
+          >
             <Dice5 className="w-6 h-6" />
           </button>
         </div>
 
+        {/* Карта */}
         <div className="flex-1 relative bg-walnut/5 rounded-xl border border-caramel/20 shadow-inner overflow-hidden">
           <div className="absolute inset-0 flex items-center justify-center text-walnut/30">
             <div className="text-center">
@@ -145,6 +169,7 @@ const Master = () => {
             </div>
           </div>
           
+          {/* Список игроков */}
           <div className="absolute top-4 right-4 bg-soft-ivory/80 backdrop-blur-sm rounded-lg shadow-lg border border-caramel/20 p-3 min-w-48 max-h-96 overflow-y-auto">
             <p className="text-xs font-semibold text-dark-chocolate/70 border-b border-caramel/20 pb-1 mb-2 flex items-center justify-between">
               <span>Игроки ({room.players.length})</span>
@@ -180,8 +205,20 @@ const Master = () => {
             </div>
           </div>
         </div>
+
+        {/* Правая панель: Чат */}
+        <div className="w-80 flex flex-col">
+          <Chat
+            messages={messages}
+            onSendMessage={sendMessage}
+            currentUserName={masterName || 'Мастер'}
+            className="flex-1"
+            maxHeight="calc(100vh - 200px)"
+          />
+        </div>
       </div>
 
+      {/* Модалки */}
       {showCharacterSheet && selectedCharacter && (
         <CharacterSheet
           character={selectedCharacter}
@@ -190,6 +227,15 @@ const Master = () => {
             setSelectedCharacter(null);
           }}
           readOnly={true}
+        />
+      )}
+
+      {showDiceRoller && (
+        <DiceRoller
+          onRoll={handleRoll}
+          onClose={() => setShowDiceRoller(false)}
+          userId={`master_${room.code}`}
+          userName={masterName || 'Мастер'}
         />
       )}
     </div>
