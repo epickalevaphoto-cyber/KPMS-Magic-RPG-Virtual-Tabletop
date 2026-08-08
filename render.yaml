@@ -3,7 +3,7 @@ services:
     name: kpms-magic-rpg
     runtime: node
     buildCommand: npm install && npm run build
-    startCommand: npm run serve
+    startCommand: npm run preview
     envVars:
       - key: NODE_VERSION
         value: 18
