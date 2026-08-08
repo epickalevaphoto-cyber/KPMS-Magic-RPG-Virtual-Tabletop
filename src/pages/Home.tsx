@@ -22,6 +22,7 @@ const Home = () => {
     }
 
     const room = createRoom(masterName.trim(), roomName.trim() || 'Новая игра');
+    console.log('✅ Room created, navigating to:', `/master/${room.code}`);
     setShowCreateModal(false);
     setError('');
     navigate(`/master/${room.code}`);
@@ -38,13 +39,16 @@ const Home = () => {
       return;
     }
 
+    console.log('🔍 Trying to join room with code:', roomCode.trim().toUpperCase());
     const room = joinRoom(roomCode.trim(), playerName.trim());
     
     if (!room) {
-      setError('Комната не найдена или уже завершена');
+      setError('Комната не найдена или уже завершена. Проверьте код комнаты.');
+      console.log('❌ Failed to join room');
       return;
     }
 
+    console.log('✅ Joined room successfully:', { roomCode: room.code, player: playerName });
     setShowJoinModal(false);
     setError('');
     navigate(`/player/${room.code}`);
