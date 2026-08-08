@@ -2,20 +2,15 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { 
   LogOut, Users, Map, Settings, BookOpen, Sparkles, 
-  FlaskConical, Dice5, Copy, Check, Key
+  FlaskConical, Dice5, Copy, Check, Eye, Key
 } from 'lucide-react';
 import Button from '../components/ui/Button';
 import CharacterSheet from '../components/character/CharacterSheet';
 import DiceRoller from '../components/dice/DiceRoller';
 import Chat from '../components/chat/Chat';
-import { 
-  getRoomSupabase, 
-  getPlayersSupabase, 
-  deleteRoomSupabase,
-  subscribeToPlayersSupabase,
-  updateRoomStatusSupabase
-} from '../services/supabase';
-import { useSupabaseChat } from '../hooks/useSupabaseChat';
+import { useChat } from '../hooks/useChat';
+import { getRoom, removeRoom } from '../services/roomService';
+import { getCharactersByRoom } from '../services/characterService';
 import { Character } from '../types/character';
 
 const Master = () => {
@@ -26,65 +21,32 @@ const Master = () => {
   const [showCharacterSheet, setShowCharacterSheet] = useState(false);
   const [showDiceRoller, setShowDiceRoller] = useState(false);
   const [room, setRoom] = useState<any>(null);
-  const [players, setPlayers] = useState<any[]>([]);
   const [showPassword, setShowPassword] = useState(false);
   const [masterName, setMasterName] = useState('');
-  const [loading, setLoading] = useState(true);
 
-  const userId = `master_${Date.now()}`;
-  const { messages, send, sendRoll, sendSystem } = useSupabaseChat(code || '', userId, masterName || 'Мастер');
+  const { messages, sendMessage, sendRollMessage, sendSystemMessage } = useChat(code || '', masterName || 'Мастер');
 
   useEffect(() => {
-    if (!code) {
-      navigate('/');
-      return;
-    }
-
-    const loadData = async () => {
-      setLoading(true);
-      
-      const roomData = await getRoomSupabase(code);
-      if (!roomData) {
+    if (code) {
+      const currentRoom = getRoom(code);
+      setRoom(currentRoom);
+      if (!currentRoom) {
         navigate('/');
-        return;
+      } else {
+        const master = currentRoom.players.find((p: any) => p.role === 'master');
+        if (master) setMasterName(master.name);
       }
-      setRoom(roomData);
+    } else {
+      navigate('/');
+    }
+  }, [code, navigate]);
 
-      const playersData = await getPlayersSupabase(code);
-      setPlayers(playersData);
-
-      const master = playersData.find(p => p.role === 'master');
-      if (master) {
-        setMasterName(master.name);
-      }
-
-      sendSystem(`👑 Мастер ${master?.name || 'Мастер'} присоединился к игре`);
-
-      setLoading(false);
-    };
-
-    loadData();
-
-    const playersSubscription = subscribeToPlayersSupabase(code, (payload) => {
-      if (payload.eventType === 'INSERT') {
-        setPlayers(prev => [...prev, payload.new]);
-        sendSystem(`👤 ${payload.new.name} присоединился к игре`);
-      } else if (payload.eventType === 'DELETE') {
-        setPlayers(prev => prev.filter(p => p.id !== payload.old.id));
-      }
-    });
-
-    return () => {
-      playersSubscription.unsubscribe();
-    };
-  }, [code, navigate, sendSystem]);
-
-  if (!room || loading) {
+  if (!room) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-soft-ivory">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-caramel mx-auto mb-4"></div>
-          <p className="text-walnut/60">Загрузка...</p>
+          <p className="text-2xl font-serif text-dark-chocolate mb-4">Комната не найдена</p>
+          <Button variant="primary" onClick={() => navigate('/')}>Вернуться на главную</Button>
         </div>
       </div>
     );
@@ -96,18 +58,18 @@ const Master = () => {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleEndGame = async () => {
+  const handleEndGame = () => {
     if (window.confirm('Вы уверены, что хотите завершить игру?')) {
-      sendSystem('🏁 Игра завершена мастером');
-      await updateRoomStatusSupabase(room.code, 'finished');
-      await deleteRoomSupabase(room.code);
+      removeRoom(room.code);
       navigate('/');
     }
   };
 
   const handleRoll = (text: string) => {
-    sendRoll(text);
+    sendRollMessage(text);
   };
+
+  const characters = getCharactersByRoom(room.id);
 
   return (
     <div className="flex flex-col h-screen bg-soft-ivory">
@@ -117,24 +79,15 @@ const Master = () => {
           <span className="text-xs text-walnut/50 bg-caramel/10 px-2 py-0.5 rounded-full">Мастер</span>
           <div className="flex items-center space-x-2 ml-4">
             <span className="text-sm text-walnut/60">Код:</span>
-            <span className="font-mono font-bold text-lg text-caramel bg-caramel/10 px-3 py-1 rounded-lg">
-              {room.code}
-            </span>
-            <button
-              onClick={handleCopyCode}
-              className="p-1 hover:bg-caramel/10 rounded-lg transition-colors"
-              title="Скопировать код"
-            >
+            <span className="font-mono font-bold text-lg text-caramel bg-caramel/10 px-3 py-1 rounded-lg">{room.code}</span>
+            <button onClick={handleCopyCode} className="p-1 hover:bg-caramel/10 rounded-lg transition-colors">
               {copied ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4 text-walnut/60" />}
             </button>
           </div>
           {room.password && (
             <div className="flex items-center space-x-1 text-xs">
               <Key className="w-3 h-3 text-amber-500" />
-              <button
-                onClick={() => setShowPassword(!showPassword)}
-                className="text-walnut/40 hover:text-amber-500 transition-colors"
-              >
+              <button onClick={() => setShowPassword(!showPassword)} className="text-walnut/40 hover:text-amber-500 transition-colors">
                 {showPassword ? room.password : '••••••'}
               </button>
             </div>
@@ -143,7 +96,7 @@ const Master = () => {
         <div className="flex items-center space-x-4">
           <div className="flex items-center space-x-2 text-sm text-walnut/60">
             <Users className="w-4 h-4" />
-            <span>{players.length} игроков</span>
+            <span>{room.players.length} игроков</span>
           </div>
           <Button variant="ghost" size="sm" className="text-walnut/60 hover:text-dark-chocolate" onClick={handleEndGame}>
             <LogOut className="w-4 h-4 mr-1" /> Завершить
@@ -153,30 +106,14 @@ const Master = () => {
 
       <div className="flex-1 flex gap-2 p-2 overflow-hidden">
         <div className="w-16 bg-soft-ivory/80 backdrop-blur-sm rounded-xl border border-caramel/20 flex flex-col items-center py-4 space-y-4 shadow-lg">
-          <button className="p-2 rounded-lg bg-caramel/10 text-caramel hover:bg-caramel/20 transition-colors" title="Игроки">
-            <Users className="w-6 h-6" />
-          </button>
-          <button className="p-2 rounded-lg text-walnut/60 hover:text-caramel hover:bg-caramel/10 transition-colors" title="Карта">
-            <Map className="w-6 h-6" />
-          </button>
-          <button className="p-2 rounded-lg text-walnut/60 hover:text-caramel hover:bg-caramel/10 transition-colors" title="Правила">
-            <BookOpen className="w-6 h-6" />
-          </button>
-          <button className="p-2 rounded-lg text-walnut/60 hover:text-caramel hover:bg-caramel/10 transition-colors" title="Заклинания">
-            <Sparkles className="w-6 h-6" />
-          </button>
-          <button className="p-2 rounded-lg text-walnut/60 hover:text-caramel hover:bg-caramel/10 transition-colors" title="Зелья">
-            <FlaskConical className="w-6 h-6" />
-          </button>
-          <button className="p-2 rounded-lg text-walnut/60 hover:text-caramel hover:bg-caramel/10 transition-colors" title="Настройки">
-            <Settings className="w-6 h-6" />
-          </button>
+          <button className="p-2 rounded-lg bg-caramel/10 text-caramel hover:bg-caramel/20 transition-colors" title="Игроки"><Users className="w-6 h-6" /></button>
+          <button className="p-2 rounded-lg text-walnut/60 hover:text-caramel hover:bg-caramel/10 transition-colors" title="Карта"><Map className="w-6 h-6" /></button>
+          <button className="p-2 rounded-lg text-walnut/60 hover:text-caramel hover:bg-caramel/10 transition-colors" title="Правила"><BookOpen className="w-6 h-6" /></button>
+          <button className="p-2 rounded-lg text-walnut/60 hover:text-caramel hover:bg-caramel/10 transition-colors" title="Заклинания"><Sparkles className="w-6 h-6" /></button>
+          <button className="p-2 rounded-lg text-walnut/60 hover:text-caramel hover:bg-caramel/10 transition-colors" title="Зелья"><FlaskConical className="w-6 h-6" /></button>
+          <button className="p-2 rounded-lg text-walnut/60 hover:text-caramel hover:bg-caramel/10 transition-colors" title="Настройки"><Settings className="w-6 h-6" /></button>
           <div className="flex-1"></div>
-          <button 
-            onClick={() => setShowDiceRoller(true)}
-            className="p-2 rounded-lg bg-caramel text-soft-ivory hover:bg-walnut transition-colors shadow-lg" 
-            title="Бросок"
-          >
+          <button onClick={() => setShowDiceRoller(true)} className="p-2 rounded-lg bg-caramel text-soft-ivory hover:bg-walnut transition-colors shadow-lg" title="Бросок">
             <Dice5 className="w-6 h-6" />
           </button>
         </div>
@@ -188,26 +125,35 @@ const Master = () => {
               <p className="font-serif text-2xl text-dark-chocolate">{room.name}</p>
               <p className="text-sm text-walnut">Карта Мастера</p>
               <p className="text-xs mt-2 text-walnut/30">Код комнаты: {room.code}</p>
-              {room.password && (
-                <p className="text-xs text-amber-500/40 mt-1">🔒 Комната защищена паролем</p>
-              )}
+              {room.password && <p className="text-xs text-amber-500/40 mt-1">🔒 Комната защищена паролем</p>}
             </div>
           </div>
           
           <div className="absolute top-4 right-4 bg-soft-ivory/80 backdrop-blur-sm rounded-lg shadow-lg border border-caramel/20 p-3 min-w-48 max-h-96 overflow-y-auto">
             <p className="text-xs font-semibold text-dark-chocolate/70 border-b border-caramel/20 pb-1 mb-2 flex items-center justify-between">
-              <span>Игроки ({players.length})</span>
+              <span>Игроки ({room.players.length})</span>
+              <span className="text-xs font-normal text-walnut/40">{characters.length} персонажей</span>
             </p>
             <div className="space-y-2">
-              {players.map((player, index) => (
-                <div key={index} className="flex items-center justify-between text-xs">
-                  <span className="flex items-center space-x-1">
-                    {player.role === 'master' && <span className="text-caramel">👑</span>}
-                    <span className="text-dark-chocolate">{player.name}</span>
-                  </span>
-                  <span className={`w-2 h-2 rounded-full ${player.role === 'master' ? 'bg-caramel' : 'bg-green-500'}`}></span>
-                </div>
-              ))}
+              {room.players.map((player: any, index: number) => {
+                const char = characters.find(c => c.userId === player.id);
+                return (
+                  <div key={index} className="flex items-center justify-between text-xs">
+                    <span className="flex items-center space-x-1">
+                      {player.role === 'master' && <span className="text-caramel">👑</span>}
+                      <span className="text-dark-chocolate">{player.name}</span>
+                    </span>
+                    <div className="flex items-center space-x-2">
+                      {char && (
+                        <button onClick={() => { setSelectedCharacter(char); setShowCharacterSheet(true); }} className="text-walnut/40 hover:text-caramel transition-colors" title="Просмотреть персонажа">
+                          <Eye className="w-3 h-3" />
+                        </button>
+                      )}
+                      <span className={`w-2 h-2 rounded-full ${player.role === 'master' ? 'bg-caramel' : 'bg-green-500'}`}></span>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>
@@ -215,7 +161,7 @@ const Master = () => {
         <div className="w-80 flex flex-col">
           <Chat
             messages={messages}
-            onSendMessage={send}
+            onSendMessage={sendMessage}
             currentUserName={masterName || 'Мастер'}
             className="flex-1"
             maxHeight="calc(100vh - 200px)"
@@ -224,23 +170,11 @@ const Master = () => {
       </div>
 
       {showCharacterSheet && selectedCharacter && (
-        <CharacterSheet
-          character={selectedCharacter}
-          onClose={() => {
-            setShowCharacterSheet(false);
-            setSelectedCharacter(null);
-          }}
-          readOnly={true}
-        />
+        <CharacterSheet character={selectedCharacter} onClose={() => { setShowCharacterSheet(false); setSelectedCharacter(null); }} readOnly={true} />
       )}
 
       {showDiceRoller && (
-        <DiceRoller
-          onRoll={handleRoll}
-          onClose={() => setShowDiceRoller(false)}
-          userId={userId}
-          userName={masterName || 'Мастер'}
-        />
+        <DiceRoller onRoll={handleRoll} onClose={() => setShowDiceRoller(false)} userId={`master_${room.code}`} userName={masterName || 'Мастер'} />
       )}
     </div>
   );
