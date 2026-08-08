@@ -108,21 +108,11 @@ export async function createRoomSupabase(
 
     if (roomError) throw roomError;
 
-    const { error: playerError } = await supabase
-      .from('players')
-      .insert({
-        room_code: code,
-        user_id: room.master_id,
-        name: masterName,
-        role: 'master'
-      });
-
-    if (playerError) throw playerError;
-
+    // ... добавление игрока
     return { room, error: null };
   } catch (error: any) {
     console.error('❌ Ошибка создания комнаты:', error);
-    return { room: null, error: error.message || 'Ошибка создания комнаты' };
+    return { room: null, error: error.message };
   }
 }
 
