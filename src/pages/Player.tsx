@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   LogOut, BookOpen, Sparkles, FlaskConical, Dice5, 
   Backpack, Settings, Users, User, Plus 
@@ -14,16 +14,39 @@ import {
 } from '../services/characterService';
 import { Character } from '../types/character';
 
+// Функция для получения или создания ID игрока в сессии
+function getPlayerId(): string {
+  let id = sessionStorage.getItem('kpms_player_id');
+  if (!id) {
+    id = `player_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+    sessionStorage.setItem('kpms_player_id', id);
+  }
+  return id;
+}
+
 const Player = () => {
   const { code } = useParams<{ code: string }>();
   const navigate = useNavigate();
   const [showCharacterSheet, setShowCharacterSheet] = useState(false);
   const [selectedCharacter, setSelectedCharacter] = useState<Character | null>(null);
   const [showCharacterList, setShowCharacterList] = useState(false);
+  const [room, setRoom] = useState(getRoom(code || ''));
+  const userId = getPlayerId();
 
-  const room = code ? getRoom(code) : null;
-  const userId = 'player_1';
+  // Проверяем комнату при загрузке и при изменении кода
+  useEffect(() => {
+    if (code) {
+      const currentRoom = getRoom(code);
+      setRoom(currentRoom);
+      
+      // Если комнаты нет, перенаправляем на главную
+      if (!currentRoom) {
+        navigate('/');
+      }
+    }
+  }, [code, navigate]);
 
+  // Если комнаты нет, показываем сообщение
   if (!room) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-krem">
