@@ -1,9 +1,8 @@
-import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LogOut, Users, Map, Settings, Wand2, BookOpen, Sparkles, FlaskConical, Dice5 } from 'lucide-react';
+import { LogOut, Users, Map, Settings, BookOpen, Sparkles, FlaskConical, Dice5 } from 'lucide-react';
 import Button from '../components/ui/Button';
 
-const Master: React.FC = () => {
+const Master = () => {
   const navigate = useNavigate();
   return (
     <div className="flex flex-col h-screen bg-krem">
