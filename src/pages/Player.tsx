@@ -33,28 +33,23 @@ const Player = () => {
   const userId = getPlayerId();
 
   useEffect(() => {
-    console.log('🔍 Player component mounted with code:', code);
     if (code) {
       const currentRoom = getRoom(code);
-      console.log('🔍 Retrieved room:', currentRoom);
       setRoom(currentRoom);
       
       if (!currentRoom) {
-        console.log('❌ Room not found, navigating to home');
         navigate('/');
       }
     } else {
-      console.log('❌ No code provided, navigating to home');
       navigate('/');
     }
   }, [code, navigate]);
 
   if (!room) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-krem">
+      <div className="min-h-screen flex items-center justify-center bg-soft-ivory">
         <div className="text-center">
-          <p className="text-2xl font-serif mb-4">Комната не найдена</p>
-          <p className="text-sm text-brown-dark/40 mb-4">Код: {code || 'не указан'}</p>
+          <p className="text-2xl font-serif text-dark-chocolate mb-4">Комната не найдена</p>
           <Button variant="primary" onClick={() => navigate('/')}>
             Вернуться на главную
           </Button>
@@ -65,8 +60,6 @@ const Player = () => {
 
   const characters = getCharactersByRoom(room.id);
   const myCharacter = getCharacterByUser(userId, room.id);
-
-  console.log('✅ Room loaded:', { room: room.code, players: room.players.length });
 
   const handleCreateCharacter = () => {
     const newChar = createCharacter(userId, room.id, `Игрок ${characters.length + 1}`);
@@ -81,55 +74,55 @@ const Player = () => {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-krem">
-      <header className="flex justify-between items-center px-6 py-3 border-b border-gold/20 bg-white/30 backdrop-blur-sm">
+    <div className="flex flex-col h-screen bg-soft-ivory">
+      <header className="flex justify-between items-center px-6 py-3 border-b border-caramel/20 bg-soft-ivory/80 backdrop-blur-sm">
         <div className="flex items-center space-x-2">
-          <span className="font-serif text-xl text-ink">KPMS</span>
-          <span className="text-xs text-brown-dark/50 bg-gold/10 px-2 py-0.5 rounded-full">Игрок</span>
-          <span className="text-xs text-brown-dark/40 bg-krem/50 px-2 py-0.5 rounded-full">
+          <span className="font-serif text-xl text-dark-chocolate">КПМБ</span>
+          <span className="text-xs text-walnut/50 bg-caramel/10 px-2 py-0.5 rounded-full">Игрок</span>
+          <span className="text-xs text-walnut/40 bg-vanilla-cream/50 px-2 py-0.5 rounded-full">
             {room.name}
           </span>
         </div>
         <div className="flex items-center space-x-4">
           <button
             onClick={() => setShowCharacterList(!showCharacterList)}
-            className="flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-gold/10 hover:bg-gold/20 transition-colors"
+            className="flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-caramel/10 hover:bg-caramel/20 transition-colors"
           >
-            <User className="w-4 h-4 text-gold" />
-            <span className="text-sm text-brown-dark/80">
+            <User className="w-4 h-4 text-caramel" />
+            <span className="text-sm text-dark-chocolate/80">
               {myCharacter ? myCharacter.name : 'Нет персонажа'}
             </span>
           </button>
-          <div className="flex items-center space-x-2 text-sm text-brown-dark/60">
+          <div className="flex items-center space-x-2 text-sm text-walnut/60">
             <Users className="w-4 h-4" />
             <span>{room.players.length} игроков</span>
           </div>
-          <Button variant="ghost" size="sm" onClick={() => navigate('/')} className="text-brown-dark/60 hover:text-ink">
+          <Button variant="ghost" size="sm" onClick={() => navigate('/')} className="text-walnut/60 hover:text-dark-chocolate">
             <LogOut className="w-4 h-4 mr-1" /> Выйти
           </Button>
         </div>
       </header>
 
-      <main className="flex-1 relative bg-brown-dark/5 m-2 rounded-xl border border-gold/20 shadow-inner overflow-hidden">
-        <div className="absolute inset-0 flex items-center justify-center text-brown-dark/30">
+      <main className="flex-1 relative bg-walnut/5 m-2 rounded-xl border border-caramel/20 shadow-inner overflow-hidden">
+        <div className="absolute inset-0 flex items-center justify-center text-walnut/30">
           <div className="text-center">
             <p className="text-6xl mb-4">🗺️</p>
-            <p className="font-serif text-2xl">{room.name}</p>
-            <p className="text-sm">Игровая карта</p>
-            <p className="text-xs mt-2 text-brown-dark/20">Код комнаты: {room.code}</p>
+            <p className="font-serif text-2xl text-dark-chocolate">{room.name}</p>
+            <p className="text-sm text-walnut">Игровая карта</p>
+            <p className="text-xs mt-2 text-walnut/30">Код комнаты: {room.code}</p>
           </div>
         </div>
-        <div className="absolute bottom-4 right-4 w-64 h-48 bg-white/60 backdrop-blur-sm rounded-lg shadow-lg border border-gold/20 p-3 flex flex-col">
-          <p className="text-xs font-semibold text-brown-dark/70 border-b border-gold/20 pb-1 mb-2">Чат</p>
-          <div className="flex-1 overflow-y-auto text-xs space-y-1 text-brown-dark/60">
+        <div className="absolute bottom-4 right-4 w-64 h-48 bg-soft-ivory/80 backdrop-blur-sm rounded-lg shadow-lg border border-caramel/20 p-3 flex flex-col">
+          <p className="text-xs font-semibold text-dark-chocolate/70 border-b border-caramel/20 pb-1 mb-2">Чат</p>
+          <div className="flex-1 overflow-y-auto text-xs space-y-1 text-walnut/60">
             <p>Добро пожаловать в игру!</p>
             <p>Мастер: Вы просыпаетесь в Большом зале...</p>
           </div>
-          <input type="text" placeholder="Написать..." className="mt-2 w-full text-xs rounded border border-gold/30 bg-transparent px-2 py-1 focus:outline-none focus:border-gold" />
+          <input type="text" placeholder="Написать..." className="mt-2 w-full text-xs rounded border border-caramel/30 bg-transparent px-2 py-1 focus:outline-none focus:border-caramel" />
         </div>
       </main>
 
-      <footer className="bg-white/50 backdrop-blur-sm border-t border-gold/20 p-2 flex justify-around items-center">
+      <footer className="bg-soft-ivory/80 backdrop-blur-sm border-t border-caramel/20 p-2 flex justify-around items-center">
         <button
           onClick={() => {
             if (myCharacter) {
@@ -137,44 +130,44 @@ const Player = () => {
               setShowCharacterSheet(true);
             }
           }}
-          className="flex flex-col items-center text-brown-dark/60 hover:text-gold transition-colors"
+          className="flex flex-col items-center text-walnut/60 hover:text-caramel transition-colors"
         >
           <User className="w-5 h-5" />
           <span className="text-[10px] font-medium mt-0.5">Персонаж</span>
         </button>
-        <button className="flex flex-col items-center text-brown-dark/60 hover:text-gold transition-colors">
+        <button className="flex flex-col items-center text-walnut/60 hover:text-caramel transition-colors">
           <BookOpen className="w-5 h-5" />
           <span className="text-[10px] font-medium mt-0.5">Правила</span>
         </button>
-        <button className="flex flex-col items-center text-brown-dark/60 hover:text-gold transition-colors">
+        <button className="flex flex-col items-center text-walnut/60 hover:text-caramel transition-colors">
           <Sparkles className="w-5 h-5" />
           <span className="text-[10px] font-medium mt-0.5">Заклинания</span>
         </button>
-        <button className="flex flex-col items-center text-brown-dark/60 hover:text-gold transition-colors">
+        <button className="flex flex-col items-center text-walnut/60 hover:text-caramel transition-colors">
           <FlaskConical className="w-5 h-5" />
           <span className="text-[10px] font-medium mt-0.5">Зелья</span>
         </button>
-        <button className="flex flex-col items-center text-gold relative">
-          <div className="w-12 h-12 -mt-4 bg-gold rounded-full flex items-center justify-center shadow-lg hover:bg-gold-dark transition-colors">
-            <Dice5 className="w-6 h-6 text-white" />
+        <button className="flex flex-col items-center text-caramel relative">
+          <div className="w-12 h-12 -mt-4 bg-caramel rounded-full flex items-center justify-center shadow-lg hover:bg-walnut transition-colors">
+            <Dice5 className="w-6 h-6 text-soft-ivory" />
           </div>
-          <span className="text-[10px] font-medium mt-0.5 text-ink">Бросок</span>
+          <span className="text-[10px] font-medium mt-0.5 text-dark-chocolate">Бросок</span>
         </button>
-        <button className="flex flex-col items-center text-brown-dark/60 hover:text-gold transition-colors">
+        <button className="flex flex-col items-center text-walnut/60 hover:text-caramel transition-colors">
           <Backpack className="w-5 h-5" />
           <span className="text-[10px] font-medium mt-0.5">Инвентарь</span>
         </button>
-        <button className="flex flex-col items-center text-brown-dark/60 hover:text-gold transition-colors">
+        <button className="flex flex-col items-center text-walnut/60 hover:text-caramel transition-colors">
           <Settings className="w-5 h-5" />
           <span className="text-[10px] font-medium mt-0.5">Настройки</span>
         </button>
       </footer>
 
       {showCharacterList && (
-        <div className="absolute right-4 top-16 bg-white rounded-xl shadow-xl border border-gold/20 p-4 min-w-64 z-10">
-          <h4 className="font-serif text-sm font-semibold mb-3">Мои персонажи</h4>
+        <div className="absolute right-4 top-16 bg-soft-ivory rounded-xl shadow-xl border border-caramel/20 p-4 min-w-64 z-10">
+          <h4 className="font-serif text-sm font-semibold text-dark-chocolate mb-3">Мои персонажи</h4>
           {characters.length === 0 ? (
-            <p className="text-xs text-brown-dark/40">Нет персонажей</p>
+            <p className="text-xs text-walnut/40">Нет персонажей</p>
           ) : (
             <div className="space-y-2">
               {characters.map(char => (
@@ -182,12 +175,12 @@ const Player = () => {
                   key={char.id}
                   onClick={() => handleSelectCharacter(char)}
                   className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
-                    myCharacter?.id === char.id ? 'bg-gold/10 border border-gold/30' : 'hover:bg-krem/50'
+                    myCharacter?.id === char.id ? 'bg-caramel/10 border border-caramel/30' : 'hover:bg-vanilla-cream/50'
                   }`}
                 >
                   <div className="flex items-center justify-between">
-                    <span>{char.name}</span>
-                    <span className="text-xs text-brown-dark/40">{char.house || 'Без факультета'}</span>
+                    <span className="text-dark-chocolate">{char.name}</span>
+                    <span className="text-xs text-walnut/40">{char.house || 'Без факультета'}</span>
                   </div>
                 </button>
               ))}
