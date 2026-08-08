@@ -7,6 +7,7 @@ export interface User {
 export interface GameRoom {
   id: string;
   code: string;
+  password: string; // Добавляем пароль
   name: string;
   masterId: string;
   players: User[];
@@ -21,10 +22,9 @@ export interface Character {
   roomId: string;
 }
 
-// Сервис для управления комнатами
 export interface RoomService {
-  createRoom(masterName: string, roomName?: string): GameRoom;
-  joinRoom(code: string, playerName: string): GameRoom | null;
+  createRoom(masterName: string, roomName?: string, password?: string): GameRoom;
+  joinRoom(code: string, password: string, playerName: string): GameRoom | null;
   getRoom(code: string): GameRoom | null;
   getRooms(): GameRoom[];
   removeRoom(code: string): void;
