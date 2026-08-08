@@ -35,7 +35,7 @@ function generateRoomCode(): string {
   return code;
 }
 
-export function createRoom(masterName: string, roomName: string = 'Новая игра'): GameRoom {
+export function createRoom(masterName: string, roomName: string = 'Новая игра', password: string = ''): GameRoom {
   let code = generateRoomCode();
   
   while (rooms.has(code)) {
@@ -45,6 +45,7 @@ export function createRoom(masterName: string, roomName: string = 'Новая и
   const room: GameRoom = {
     id: `room_${Date.now()}`,
     code: code,
+    password: password.trim() || '',
     name: roomName,
     masterId: `master_${Date.now()}`,
     players: [
@@ -64,7 +65,7 @@ export function createRoom(masterName: string, roomName: string = 'Новая и
   return room;
 }
 
-export function joinRoom(code: string, playerName: string): GameRoom | null {
+export function joinRoom(code: string, password: string, playerName: string): GameRoom | null {
   const room = rooms.get(code.toUpperCase());
   
   console.log('🔍 Attempting to join room:', { code: code.toUpperCase(), roomExists: !!room });
@@ -76,6 +77,12 @@ export function joinRoom(code: string, playerName: string): GameRoom | null {
 
   if (room.status === 'finished') {
     console.log('❌ Room is finished');
+    return null;
+  }
+
+  // Проверяем пароль
+  if (room.password && room.password !== password.trim()) {
+    console.log('❌ Wrong password');
     return null;
   }
 
@@ -116,14 +123,12 @@ export function removeRoom(code: string): boolean {
   return result;
 }
 
-// Новая функция: удаление всех комнат
 export function clearAllRooms(): void {
   rooms.clear();
   saveRooms(rooms);
   console.log('🗑️ All rooms cleared');
 }
 
-// Новая функция: удаление старых комнат (старше указанного времени)
 export function removeOldRooms(maxAgeHours: number = 24): number {
   const now = Date.now();
   const maxAge = maxAgeHours * 60 * 60 * 1000;
@@ -158,6 +163,15 @@ export function updateRoomStatus(code: string, status: 'waiting' | 'playing' | '
   if (!room) return false;
   
   room.status = status;
+  saveRooms(rooms);
+  return true;
+}
+
+export function updateRoomPassword(code: string, newPassword: string): boolean {
+  const room = rooms.get(code.toUpperCase());
+  if (!room) return false;
+  
+  room.password = newPassword.trim() || '';
   saveRooms(rooms);
   return true;
 }
