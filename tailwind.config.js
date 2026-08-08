@@ -7,11 +7,21 @@ export default {
   theme: {
     extend: {
       colors: {
-        'krem': '#F5EFE6',
-        'brown-dark': '#2C1A14',
-        'gold': '#C5A26B',
-        'gold-dark': '#A8884E',
-        'ink': '#1E1A17',
+        // Новая палитра КПМБ
+        'dark-chocolate': '#3B2A20',
+        'walnut': '#7B5E4A',
+        'caramel': '#A67C52',
+        'warm-beige': '#D1B89A',
+        'vanilla-cream': '#F2E7D5',
+        'soft-ivory': '#FAF7F0',
+        
+        // Алиасы для удобства
+        'primary': '#3B2A20',
+        'secondary': '#7B5E4A',
+        'accent': '#A67C52',
+        'light': '#F2E7D5',
+        'background': '#FAF7F0',
+        'text': '#3B2A20',
       },
       fontFamily: {
         'serif': ['"Times New Roman"', 'serif'],
