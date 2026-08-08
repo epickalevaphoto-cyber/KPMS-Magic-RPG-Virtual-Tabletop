@@ -25,6 +25,8 @@ const Master = () => {
       setRoom(currentRoom);
       
       if (!currentRoom) {
+        // Если комнаты нет, очищаем мастер-статус
+        localStorage.removeItem('kpms_master_id');
         navigate('/');
       }
     } else {
@@ -54,6 +56,8 @@ const Master = () => {
   const handleEndGame = () => {
     if (window.confirm('Вы уверены, что хотите завершить игру?')) {
       removeRoom(room.code);
+      // Очищаем мастер-статус при завершении игры
+      localStorage.removeItem('kpms_master_id');
       navigate('/');
     }
   };
