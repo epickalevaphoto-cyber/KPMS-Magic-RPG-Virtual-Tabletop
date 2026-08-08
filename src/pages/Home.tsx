@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Wand2, Users, Plus, LogIn, X, List, Copy } from 'lucide-react';
+import { Wand2, Users, Plus, LogIn, X, List, Copy, Trash2, AlertCircle } from 'lucide-react';
 import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
-import { createRoom, joinRoom, getRooms } from '../services/roomService';
+import { createRoom, joinRoom, getRooms, removeRoom, clearAllRooms, removeOldRooms } from '../services/roomService';
 
 const Home = () => {
   const navigate = useNavigate();
@@ -16,8 +16,8 @@ const Home = () => {
   const [playerName, setPlayerName] = useState('');
   const [error, setError] = useState('');
   const [rooms, setRooms] = useState<any[]>([]);
+  const [showConfirmDelete, setShowConfirmDelete] = useState<string | null>(null);
 
-  // Загружаем список комнат при открытии
   useEffect(() => {
     const loadRooms = () => {
       const allRooms = getRooms();
@@ -26,7 +26,6 @@ const Home = () => {
     };
     loadRooms();
     
-    // Обновляем список каждые 5 секунд
     const interval = setInterval(loadRooms, 5000);
     return () => clearInterval(interval);
   }, []);
@@ -80,6 +79,29 @@ const Home = () => {
     navigator.clipboard.writeText(code);
   };
 
+  const handleDeleteRoom = (code: string) => {
+    removeRoom(code);
+    setRooms(getRooms());
+    setShowConfirmDelete(null);
+  };
+
+  const handleClearAllRooms = () => {
+    if (window.confirm('Вы уверены, что хотите удалить ВСЕ комнаты? Это действие нельзя отменить.')) {
+      clearAllRooms();
+      setRooms(getRooms());
+    }
+  };
+
+  const handleRemoveOldRooms = () => {
+    const removed = removeOldRooms(24);
+    setRooms(getRooms());
+    if (removed > 0) {
+      alert(`Удалено ${removed} старых комнат (старше 24 часов)`);
+    } else {
+      alert('Нет старых комнат для удаления');
+    }
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-krem">
       <div className="text-center max-w-3xl mx-auto px-4 py-12">
@@ -117,8 +139,8 @@ const Home = () => {
           </Card>
         </div>
 
-        {/* Кнопка для просмотра комнат */}
-        <div className="mt-6">
+        {/* Управление комнатами */}
+        <div className="mt-6 flex flex-col items-center space-y-2">
           <button
             onClick={() => setShowRoomList(!showRoomList)}
             className="text-sm text-brown-dark/50 hover:text-gold transition-colors flex items-center justify-center mx-auto space-x-2"
@@ -126,20 +148,45 @@ const Home = () => {
             <List className="w-4 h-4" />
             <span>Показать активные комнаты ({rooms.length})</span>
           </button>
+
+          {rooms.length > 0 && (
+            <div className="flex items-center space-x-4">
+              <button
+                onClick={handleRemoveOldRooms}
+                className="text-xs text-brown-dark/40 hover:text-gold transition-colors"
+              >
+                Удалить старые (24ч)
+              </button>
+              <button
+                onClick={handleClearAllRooms}
+                className="text-xs text-red-400 hover:text-red-600 transition-colors"
+              >
+                Удалить все
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Список активных комнат */}
         {showRoomList && (
-          <div className="mt-4 bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border border-gold/20 p-4 max-h-60 overflow-y-auto">
-            <h3 className="font-serif text-sm font-semibold text-brown-dark/70 mb-3">Активные комнаты:</h3>
+          <div className="mt-4 bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border border-gold/20 p-4 max-h-72 overflow-y-auto">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-serif text-sm font-semibold text-brown-dark/70">Активные комнаты:</h3>
+              <span className="text-xs text-brown-dark/40">{rooms.length} комнат</span>
+            </div>
             {rooms.length === 0 ? (
               <p className="text-sm text-brown-dark/40">Нет активных комнат</p>
             ) : (
               <div className="space-y-2">
                 {rooms.map((room, index) => (
-                  <div key={index} className="flex items-center justify-between bg-krem/30 rounded-lg px-4 py-2">
+                  <div key={index} className="flex items-center justify-between bg-krem/30 rounded-lg px-4 py-2 hover:bg-krem/50 transition-colors">
                     <div className="text-left">
-                      <div className="font-mono font-bold text-gold">{room.code}</div>
+                      <div className="flex items-center space-x-2">
+                        <span className="font-mono font-bold text-gold">{room.code}</span>
+                        <span className="text-xs text-brown-dark/40">
+                          {new Date(room.createdAt).toLocaleTimeString()}
+                        </span>
+                      </div>
                       <div className="text-xs text-brown-dark/60">{room.name}</div>
                       <div className="text-xs text-brown-dark/40">Игроков: {room.players.length}</div>
                     </div>
@@ -158,6 +205,13 @@ const Home = () => {
                       >
                         Войти
                       </Button>
+                      <button
+                        onClick={() => setShowConfirmDelete(room.code)}
+                        className="p-1 text-red-400 hover:text-red-600 transition-colors"
+                        title="Удалить комнату"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
                     </div>
                   </div>
                 ))}
@@ -170,6 +224,39 @@ const Home = () => {
           <span>✦ Версия 0.2 ✦</span>
         </div>
       </div>
+
+      {/* Модальное окно подтверждения удаления */}
+      {showConfirmDelete && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+            <div className="flex items-center space-x-3 mb-4">
+              <AlertCircle className="w-8 h-8 text-red-500" />
+              <h3 className="font-serif text-xl font-semibold">Удалить комнату?</h3>
+            </div>
+            <p className="text-sm text-brown-dark/70 mb-6">
+              Вы уверены, что хотите удалить комнату <span className="font-mono font-bold text-gold">{showConfirmDelete}</span>?
+              Это действие нельзя отменить.
+            </p>
+            <div className="flex space-x-3">
+              <Button
+                variant="secondary"
+                className="flex-1"
+                onClick={() => setShowConfirmDelete(null)}
+              >
+                Отмена
+              </Button>
+              <Button
+                variant="primary"
+                className="flex-1 bg-red-500 hover:bg-red-600"
+                onClick={() => handleDeleteRoom(showConfirmDelete)}
+              >
+                <Trash2 className="w-4 h-4 mr-2" />
+                Удалить
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Модальное окно создания комнаты */}
       {showCreateModal && (
