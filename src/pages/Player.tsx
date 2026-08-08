@@ -2,7 +2,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { 
   LogOut, BookOpen, Sparkles, FlaskConical, Dice5, 
-  Backpack, Settings, Users, User, Plus, MessageSquare
+  Backpack, Settings, Users, User, Plus
 } from 'lucide-react';
 import Button from '../components/ui/Button';
 import CharacterSheet from '../components/character/CharacterSheet';
@@ -33,12 +33,10 @@ const Player = () => {
   const [selectedCharacter, setSelectedCharacter] = useState<Character | null>(null);
   const [showCharacterList, setShowCharacterList] = useState(false);
   const [showDiceRoller, setShowDiceRoller] = useState(false);
-  const [showChat, setShowChat] = useState(false);
   const [room, setRoom] = useState<any>(null);
   const userId = getPlayerId();
   const [playerName, setPlayerName] = useState('');
 
-  // Чат
   const { messages, sendMessage, sendRollMessage } = useChat(code || '', playerName || 'Игрок');
 
   useEffect(() => {
@@ -49,7 +47,6 @@ const Player = () => {
       if (!currentRoom) {
         navigate('/');
       } else {
-        // Находим имя игрока в комнате
         const player = currentRoom.players.find(p => p.id === userId);
         if (player) {
           setPlayerName(player.name);
@@ -123,7 +120,6 @@ const Player = () => {
       </header>
 
       <main className="flex-1 flex gap-2 p-2 overflow-hidden">
-        {/* Карта */}
         <div className="flex-1 relative bg-walnut/5 rounded-xl border border-caramel/20 shadow-inner overflow-hidden">
           <div className="absolute inset-0 flex items-center justify-center text-walnut/30">
             <div className="text-center">
@@ -135,7 +131,6 @@ const Player = () => {
           </div>
         </div>
 
-        {/* Правая панель: Чат */}
         <div className="w-80 flex flex-col">
           <Chat
             messages={messages}
@@ -147,7 +142,6 @@ const Player = () => {
         </div>
       </main>
 
-      {/* Нижняя панель */}
       <footer className="bg-soft-ivory/80 backdrop-blur-sm border-t border-caramel/20 p-2 flex justify-around items-center">
         <button
           onClick={() => {
@@ -192,7 +186,6 @@ const Player = () => {
         </button>
       </footer>
 
-      {/* Модалки */}
       {showCharacterList && (
         <div className="absolute right-4 top-16 bg-soft-ivory rounded-xl shadow-xl border border-caramel/20 p-4 min-w-64 z-10">
           <h4 className="font-serif text-sm font-semibold text-dark-chocolate mb-3">Мои персонажи</h4>
