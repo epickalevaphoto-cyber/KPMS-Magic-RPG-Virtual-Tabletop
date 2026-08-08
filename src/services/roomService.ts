@@ -1,9 +1,7 @@
 import { GameRoom, User } from '../types';
 
-// Ключ для localStorage
 const STORAGE_KEY = 'kpms_rooms';
 
-// Загрузка комнат из localStorage
 function loadRooms(): Map<string, GameRoom> {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -17,7 +15,6 @@ function loadRooms(): Map<string, GameRoom> {
   return new Map();
 }
 
-// Сохранение комнат в localStorage
 function saveRooms(rooms: Map<string, GameRoom>): void {
   try {
     const data = Object.fromEntries(rooms);
@@ -27,10 +24,8 @@ function saveRooms(rooms: Map<string, GameRoom>): void {
   }
 }
 
-// Хранилище комнат
 let rooms: Map<string, GameRoom> = loadRooms();
 
-// Генерация уникального 6-значного кода
 function generateRoomCode(): string {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
   let code = '';
@@ -40,7 +35,6 @@ function generateRoomCode(): string {
   return code;
 }
 
-// Создание новой комнаты
 export function createRoom(masterName: string, roomName: string = 'Новая игра'): GameRoom {
   let code = generateRoomCode();
   
@@ -52,11 +46,11 @@ export function createRoom(masterName: string, roomName: string = 'Новая и
     id: `room_${Date.now()}`,
     code: code,
     name: roomName,
-    masterId: `user_${Date.now()}`,
+    masterId: `master_${Date.now()}`,
     players: [
       {
-        id: `user_${Date.now()}`,
-        name: masterName,
+        id: `master_${Date.now()}`,
+        name: masterName.trim(),
         role: 'master'
       }
     ],
@@ -66,50 +60,54 @@ export function createRoom(masterName: string, roomName: string = 'Новая и
 
   rooms.set(code, room);
   saveRooms(rooms);
+  console.log('✅ Room created:', { code, room });
   return room;
 }
 
-// Присоединение к комнате
 export function joinRoom(code: string, playerName: string): GameRoom | null {
   const room = rooms.get(code.toUpperCase());
   
+  console.log('🔍 Attempting to join room:', { code: code.toUpperCase(), roomExists: !!room });
+  
   if (!room) {
+    console.log('❌ Room not found');
     return null;
   }
 
   if (room.status === 'finished') {
+    console.log('❌ Room is finished');
     return null;
   }
 
   // Проверяем, не присоединен ли уже игрок с таким именем
-  const existingPlayer = room.players.find(p => p.name === playerName);
+  const existingPlayer = room.players.find(p => p.name === playerName.trim());
   if (existingPlayer) {
+    console.log('❌ Player with same name already exists:', playerName);
     return null;
   }
 
   const newPlayer: User = {
-    id: `user_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
-    name: playerName,
+    id: `player_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+    name: playerName.trim(),
     role: 'player'
   };
 
   room.players.push(newPlayer);
   saveRooms(rooms);
+  console.log('✅ Player joined:', { player: newPlayer, totalPlayers: room.players.length });
   return room;
 }
 
-// Получение комнаты по коду
 export function getRoom(code: string): GameRoom | null {
   const room = rooms.get(code.toUpperCase()) || null;
+  console.log('🔍 Getting room:', { code: code.toUpperCase(), found: !!room });
   return room;
 }
 
-// Получение всех комнат
 export function getRooms(): GameRoom[] {
   return Array.from(rooms.values());
 }
 
-// Удаление комнаты
 export function removeRoom(code: string): boolean {
   const result = rooms.delete(code.toUpperCase());
   if (result) {
@@ -118,18 +116,15 @@ export function removeRoom(code: string): boolean {
   return result;
 }
 
-// Проверка, существует ли комната
 export function roomExists(code: string): boolean {
   return rooms.has(code.toUpperCase());
 }
 
-// Получение количества игроков в комнате
 export function getPlayerCount(code: string): number {
   const room = rooms.get(code.toUpperCase());
   return room ? room.players.length : 0;
 }
 
-// Обновление статуса комнаты
 export function updateRoomStatus(code: string, status: 'waiting' | 'playing' | 'finished'): boolean {
   const room = rooms.get(code.toUpperCase());
   if (!room) return false;
