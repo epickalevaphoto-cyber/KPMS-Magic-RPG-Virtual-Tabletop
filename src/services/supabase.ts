@@ -1,19 +1,8 @@
-// @ts-ignore - игнорируем ошибку типов для Vite
 import { createClient } from '@supabase/supabase-js';
 
 // ============================================
 // 1. ПОДКЛЮЧЕНИЕ К SUPABASE
 // ============================================
-
-// Используем declare для типов окружения
-declare global {
-  interface ImportMeta {
-    env: {
-      VITE_SUPABASE_URL?: string;
-      VITE_SUPABASE_ANON_KEY?: string;
-    };
-  }
-}
 
 // Загружаем переменные окружения
 const supabaseUrl = (import.meta as any).env?.VITE_SUPABASE_URL || '';
