@@ -1,13 +1,20 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { LogOut, Users, Map, Settings, BookOpen, Sparkles, FlaskConical, Dice5, Copy, Check } from 'lucide-react';
 import { useState } from 'react';
+import { 
+  LogOut, Users, Map, Settings, BookOpen, Sparkles, 
+  FlaskConical, Dice5, Copy, Check, User, Eye 
+} from 'lucide-react';
 import Button from '../components/ui/Button';
+import CharacterSheet from '../components/character/CharacterSheet';
 import { getRoom, removeRoom } from '../services/roomService';
+import { getCharactersByRoom } from '../services/characterService';
 
 const Master = () => {
   const { code } = useParams<{ code: string }>();
   const navigate = useNavigate();
   const [copied, setCopied] = useState(false);
+  const [selectedCharacter, setSelectedCharacter] = useState(null);
+  const [showCharacterSheet, setShowCharacterSheet] = useState(false);
 
   const room = code ? getRoom(code) : null;
 
@@ -23,6 +30,8 @@ const Master = () => {
       </div>
     );
   }
+
+  const characters = getCharactersByRoom(room.id);
 
   const handleCopyCode = () => {
     navigator.clipboard.writeText(room.code);
@@ -104,24 +113,54 @@ const Master = () => {
             </div>
           </div>
           
-          <div className="absolute top-4 right-4 bg-white/70 backdrop-blur-sm rounded-lg shadow-lg border border-gold/20 p-3 min-w-48">
-            <p className="text-xs font-semibold text-brown-dark/70 border-b border-gold/20 pb-1 mb-2">
-              Игроки ({room.players.length})
+          <div className="absolute top-4 right-4 bg-white/70 backdrop-blur-sm rounded-lg shadow-lg border border-gold/20 p-3 min-w-48 max-h-96 overflow-y-auto">
+            <p className="text-xs font-semibold text-brown-dark/70 border-b border-gold/20 pb-1 mb-2 flex items-center justify-between">
+              <span>Игроки ({room.players.length})</span>
+              <span className="text-xs font-normal text-brown-dark/40">{characters.length} персонажей</span>
             </p>
-            <div className="space-y-1">
-              {room.players.map((player, index) => (
-                <div key={index} className="flex items-center justify-between text-xs">
-                  <span className="flex items-center space-x-1">
-                    {player.role === 'master' && <span className="text-gold">👑</span>}
-                    <span>{player.name}</span>
-                  </span>
-                  <span className={`w-2 h-2 rounded-full ${player.role === 'master' ? 'bg-gold' : 'bg-green-500'}`}></span>
-                </div>
-              ))}
+            <div className="space-y-2">
+              {room.players.map((player, index) => {
+                const char = characters.find(c => c.userId === player.id);
+                return (
+                  <div key={index} className="flex items-center justify-between text-xs">
+                    <span className="flex items-center space-x-1">
+                      {player.role === 'master' && <span className="text-gold">👑</span>}
+                      <span>{player.name}</span>
+                    </span>
+                    <div className="flex items-center space-x-2">
+                      {char && (
+                        <button
+                          onClick={() => {
+                            setSelectedCharacter(char);
+                            setShowCharacterSheet(true);
+                          }}
+                          className="text-brown-dark/40 hover:text-gold transition-colors"
+                          title="Просмотреть персонажа"
+                        >
+                          <Eye className="w-3 h-3" />
+                        </button>
+                      )}
+                      <span className={`w-2 h-2 rounded-full ${player.role === 'master' ? 'bg-gold' : 'bg-green-500'}`}></span>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>
       </div>
+
+      {/* Чарлист для мастера (только просмотр) */}
+      {showCharacterSheet && selectedCharacter && (
+        <CharacterSheet
+          character={selectedCharacter}
+          onClose={() => {
+            setShowCharacterSheet(false);
+            setSelectedCharacter(null);
+          }}
+          readOnly={true}
+        />
+      )}
     </div>
   );
 };
