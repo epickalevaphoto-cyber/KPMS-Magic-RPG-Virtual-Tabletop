@@ -28,8 +28,12 @@ function saveMessages(messages: ChatMessage[]): void {
   }
 }
 
+// Множество для отслеживания уже отправленных системных сообщений
+const sentSystemMessages = new Set<string>();
+
 export function useChat(roomCode: string, userName: string) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   // Загрузка сообщений при монтировании
   useEffect(() => {
@@ -37,15 +41,17 @@ export function useChat(roomCode: string, userName: string) {
     // Фильтруем только сообщения для этой комнаты
     const roomMessages = loaded.filter(m => m.userId === roomCode);
     setMessages(roomMessages);
+    setIsInitialized(true);
   }, [roomCode]);
 
   // Сохранение при изменении
   useEffect(() => {
-    // Сохраняем все сообщения, помечая комнату в userId
-    const allMessages = loadMessages();
-    const otherMessages = allMessages.filter(m => m.userId !== roomCode);
-    saveMessages([...otherMessages, ...messages]);
-  }, [messages, roomCode]);
+    if (isInitialized) {
+      const allMessages = loadMessages();
+      const otherMessages = allMessages.filter(m => m.userId !== roomCode);
+      saveMessages([...otherMessages, ...messages]);
+    }
+  }, [messages, roomCode, isInitialized]);
 
   const sendMessage = (text: string, type: 'message' | 'roll' | 'system' = 'message') => {
     const message: ChatMessage = {
@@ -65,16 +71,37 @@ export function useChat(roomCode: string, userName: string) {
   };
 
   const sendSystemMessage = (text: string) => {
+    // Создаем уникальный ключ для сообщения
+    const messageKey = `${roomCode}_${text}`;
+    
+    // Проверяем, не было ли уже отправлено такое сообщение
+    if (sentSystemMessages.has(messageKey)) {
+      console.log('⚠️ Системное сообщение уже отправлено:', text);
+      return null;
+    }
+    
+    // Отмечаем как отправленное
+    sentSystemMessages.add(messageKey);
+    
+    // Отправляем сообщение
     return sendMessage(text, 'system');
   };
 
   const clearMessages = () => {
     setMessages([]);
-    // Удаляем все сообщения этой комнаты
     const allMessages = loadMessages();
     const otherMessages = allMessages.filter(m => m.userId !== roomCode);
     saveMessages(otherMessages);
+    // Очищаем кэш системных сообщений
+    sentSystemMessages.clear();
   };
+
+  // Очистка кэша при размонтировании
+  useEffect(() => {
+    return () => {
+      // Очищаем только сообщения этой комнаты, но не системные
+    };
+  }, []);
 
   return {
     messages,
