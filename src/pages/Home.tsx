@@ -90,6 +90,16 @@ const Home = () => {
     }
   };
 
+  const handleRemoveOldRooms = () => {
+    const removed = removeOldRooms(24);
+    setRooms(getRooms());
+    if (removed > 0) {
+      alert(`Удалено ${removed} старых комнат (старше 24 часов)`);
+    } else {
+      alert('Нет старых комнат для удаления');
+    }
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-krem bg-cover bg-center bg-no-repeat relative"
          style={{
