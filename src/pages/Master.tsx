@@ -2,7 +2,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { 
   LogOut, Users, Map, Settings, BookOpen, Sparkles, 
-  FlaskConical, Dice5, Copy, Check, Eye 
+  FlaskConical, Dice5, Copy, Check, Eye, Key, Lock, Unlock 
 } from 'lucide-react';
 import Button from '../components/ui/Button';
 import CharacterSheet from '../components/character/CharacterSheet';
@@ -17,20 +17,17 @@ const Master = () => {
   const [selectedCharacter, setSelectedCharacter] = useState<Character | null>(null);
   const [showCharacterSheet, setShowCharacterSheet] = useState(false);
   const [room, setRoom] = useState<any>(null);
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
-    console.log('🔍 Master component mounted with code:', code);
     if (code) {
       const currentRoom = getRoom(code);
-      console.log('🔍 Retrieved room:', currentRoom);
       setRoom(currentRoom);
       
       if (!currentRoom) {
-        console.log('❌ Room not found, navigating to home');
         navigate('/');
       }
     } else {
-      console.log('❌ No code provided, navigating to home');
       navigate('/');
     }
   }, [code, navigate]);
@@ -40,8 +37,6 @@ const Master = () => {
       <div className="min-h-screen flex items-center justify-center bg-krem">
         <div className="text-center">
           <p className="text-2xl font-serif mb-4">Комната не найдена</p>
-          <p className="text-sm text-brown-dark/40 mb-4">Код: {code || 'не указан'}</p>
-          <p className="text-xs text-brown-dark/30 mb-4">Убедитесь, что вы создали комнату</p>
           <Button variant="primary" onClick={() => navigate('/')}>
             Вернуться на главную
           </Button>
@@ -84,6 +79,17 @@ const Master = () => {
               {copied ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4 text-brown-dark/60" />}
             </button>
           </div>
+          {room.password && (
+            <div className="flex items-center space-x-1 text-xs">
+              <Key className="w-3 h-3 text-amber-500" />
+              <button
+                onClick={() => setShowPassword(!showPassword)}
+                className="text-brown-dark/40 hover:text-amber-500 transition-colors"
+              >
+                {showPassword ? room.password : '••••••'}
+              </button>
+            </div>
+          )}
         </div>
         <div className="flex items-center space-x-4">
           <div className="flex items-center space-x-2 text-sm text-brown-dark/60">
@@ -129,7 +135,9 @@ const Master = () => {
               <p className="font-serif text-2xl">{room.name}</p>
               <p className="text-sm">Карта Мастера</p>
               <p className="text-xs mt-2 text-brown-dark/20">Код комнаты: {room.code}</p>
-              <p className="text-xs mt-1 text-brown-dark/20">Передайте код игрокам</p>
+              {room.password && (
+                <p className="text-xs text-amber-500/40 mt-1">🔒 Комната защищена паролем</p>
+              )}
             </div>
           </div>
           
