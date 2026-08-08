@@ -14,7 +14,6 @@ import {
 } from '../services/characterService';
 import { Character } from '../types/character';
 
-// Функция для получения или создания ID игрока в сессии
 function getPlayerId(): string {
   let id = sessionStorage.getItem('kpms_player_id');
   if (!id) {
@@ -30,28 +29,32 @@ const Player = () => {
   const [showCharacterSheet, setShowCharacterSheet] = useState(false);
   const [selectedCharacter, setSelectedCharacter] = useState<Character | null>(null);
   const [showCharacterList, setShowCharacterList] = useState(false);
-  const [room, setRoom] = useState(getRoom(code || ''));
+  const [room, setRoom] = useState<any>(null);
   const userId = getPlayerId();
 
-  // Проверяем комнату при загрузке и при изменении кода
   useEffect(() => {
+    console.log('🔍 Player component mounted with code:', code);
     if (code) {
       const currentRoom = getRoom(code);
+      console.log('🔍 Retrieved room:', currentRoom);
       setRoom(currentRoom);
       
-      // Если комнаты нет, перенаправляем на главную
       if (!currentRoom) {
+        console.log('❌ Room not found, navigating to home');
         navigate('/');
       }
+    } else {
+      console.log('❌ No code provided, navigating to home');
+      navigate('/');
     }
   }, [code, navigate]);
 
-  // Если комнаты нет, показываем сообщение
   if (!room) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-krem">
         <div className="text-center">
           <p className="text-2xl font-serif mb-4">Комната не найдена</p>
+          <p className="text-sm text-brown-dark/40 mb-4">Код: {code || 'не указан'}</p>
           <Button variant="primary" onClick={() => navigate('/')}>
             Вернуться на главную
           </Button>
@@ -62,6 +65,8 @@ const Player = () => {
 
   const characters = getCharactersByRoom(room.id);
   const myCharacter = getCharacterByUser(userId, room.id);
+
+  console.log('✅ Room loaded:', { room: room.code, players: room.players.length });
 
   const handleCreateCharacter = () => {
     const newChar = createCharacter(userId, room.id, `Игрок ${characters.length + 1}`);
