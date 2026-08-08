@@ -1,1 +1,33 @@
-.
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-krem text-ink font-sans antialiased;
+    margin: 0;
+    min-height: 100vh;
+  }
+
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-krem/50;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-gold rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-gold-dark;
+  }
+}
+
+@layer components {
+  .magic-text {
+    text-shadow: 0 0 10px rgba(197, 162, 107, 0.3);
+  }
+}
