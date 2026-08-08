@@ -8,9 +8,16 @@ import Button from '../components/ui/Button';
 import CharacterSheet from '../components/character/CharacterSheet';
 import DiceRoller from '../components/dice/DiceRoller';
 import Chat from '../components/chat/Chat';
-import { useChat } from '../hooks/useChat';
-import { getRoom, removeRoom } from '../services/roomService';
-import { getCharactersByRoom } from '../services/characterService';
+import { 
+  getRoomSupabase, 
+  getPlayersSupabase, 
+  deleteRoomSupabase,
+  subscribeToPlayersSupabase,
+  subscribeToMessagesSupabase,
+  updateRoomStatusSupabase,
+  isSupabaseConnected
+} from '../services/supabase';
+import { useSupabaseChat } from '../hooks/useSupabaseChat';
 import { Character } from '../types/character';
 
 const Master = () => {
@@ -21,39 +28,78 @@ const Master = () => {
   const [showCharacterSheet, setShowCharacterSheet] = useState(false);
   const [showDiceRoller, setShowDiceRoller] = useState(false);
   const [room, setRoom] = useState<any>(null);
+  const [players, setPlayers] = useState<any[]>([]);
   const [showPassword, setShowPassword] = useState(false);
   const [masterName, setMasterName] = useState('');
+  const [loading, setLoading] = useState(true);
 
-  const { messages, sendMessage, sendRollMessage, sendSystemMessage } = useChat(code || '', masterName || 'Мастер');
+  // Чат через Supabase
+  const userId = `master_${Date.now()}`;
+  const { messages, send, sendRoll, sendSystem } = useSupabaseChat(code || '', userId, masterName || 'Мастер');
 
+  // Загрузка данных
   useEffect(() => {
-    if (code) {
-      const currentRoom = getRoom(code);
-      setRoom(currentRoom);
-      
-      if (!currentRoom) {
-        localStorage.removeItem('kpms_master_id');
-        navigate('/');
-      } else {
-        const master = currentRoom.players.find(p => p.role === 'master');
-        if (master) {
-          setMasterName(master.name);
-        }
-        sendSystemMessage(`👑 Мастер ${master?.name || 'Мастер'} присоединился к игре`);
-      }
-    } else {
+    if (!code) {
       navigate('/');
+      return;
     }
-  }, [code, navigate, sendSystemMessage]);
 
-  if (!room) {
+    const loadData = async () => {
+      setLoading(true);
+      
+      // Загружаем комнату
+      const roomData = await getRoomSupabase(code);
+      if (!roomData) {
+        navigate('/');
+        return;
+      }
+      setRoom(roomData);
+
+      // Загружаем игроков
+      const playersData = await getPlayersSupabase(code);
+      setPlayers(playersData);
+
+      // Находим мастера
+      const master = playersData.find(p => p.role === 'master');
+      if (master) {
+        setMasterName(master.name);
+      }
+
+      // Отправляем системное сообщение
+      sendSystem(`👑 Мастер ${master?.name || 'Мастер'} присоединился к игре`);
+
+      setLoading(false);
+    };
+
+    loadData();
+
+    // Подписка на новых игроков
+    const playersSubscription = subscribeToPlayersSupabase(code, (payload) => {
+      if (payload.eventType === 'INSERT') {
+        setPlayers(prev => [...prev, payload.new]);
+        sendSystem(`👤 ${payload.new.name} присоединился к игре`);
+      } else if (payload.eventType === 'DELETE') {
+        setPlayers(prev => prev.filter(p => p.id !== payload.old.id));
+      }
+    });
+
+    // Подписка на сообщения
+    const messagesSubscription = subscribeToMessagesSupabase(code, (newMessage) => {
+      // Сообщения уже обрабатываются в useSupabaseChat
+    });
+
+    return () => {
+      playersSubscription.unsubscribe();
+      messagesSubscription.unsubscribe();
+    };
+  }, [code, navigate, sendSystem]);
+
+  if (!room || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-soft-ivory">
         <div className="text-center">
-          <p className="text-2xl font-serif text-dark-chocolate mb-4">Комната не найдена</p>
-          <Button variant="primary" onClick={() => navigate('/')}>
-            Вернуться на главную
-          </Button>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-caramel mx-auto mb-4"></div>
+          <p className="text-walnut/60">Загрузка...</p>
         </div>
       </div>
     );
@@ -65,20 +111,18 @@ const Master = () => {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleEndGame = () => {
+  const handleEndGame = async () => {
     if (window.confirm('Вы уверены, что хотите завершить игру?')) {
-      sendSystemMessage('🏁 Игра завершена мастером');
-      removeRoom(room.code);
-      localStorage.removeItem('kpms_master_id');
+      sendSystem('🏁 Игра завершена мастером');
+      await updateRoomStatusSupabase(room.code, 'finished');
+      await deleteRoomSupabase(room.code);
       navigate('/');
     }
   };
 
   const handleRoll = (text: string) => {
-    sendRollMessage(text);
+    sendRoll(text);
   };
-
-  const characters = getCharactersByRoom(room.id);
 
   return (
     <div className="flex flex-col h-screen bg-soft-ivory">
@@ -114,7 +158,7 @@ const Master = () => {
         <div className="flex items-center space-x-4">
           <div className="flex items-center space-x-2 text-sm text-walnut/60">
             <Users className="w-4 h-4" />
-            <span>{room.players.length} игроков</span>
+            <span>{players.length} игроков</span>
           </div>
           <Button variant="ghost" size="sm" className="text-walnut/60 hover:text-dark-chocolate" onClick={handleEndGame}>
             <LogOut className="w-4 h-4 mr-1" /> Завершить
@@ -167,36 +211,18 @@ const Master = () => {
           
           <div className="absolute top-4 right-4 bg-soft-ivory/80 backdrop-blur-sm rounded-lg shadow-lg border border-caramel/20 p-3 min-w-48 max-h-96 overflow-y-auto">
             <p className="text-xs font-semibold text-dark-chocolate/70 border-b border-caramel/20 pb-1 mb-2 flex items-center justify-between">
-              <span>Игроки ({room.players.length})</span>
-              <span className="text-xs font-normal text-walnut/40">{characters.length} персонажей</span>
+              <span>Игроки ({players.length})</span>
             </p>
             <div className="space-y-2">
-              {room.players.map((player: any, index: number) => {
-                const char = characters.find(c => c.userId === player.id);
-                return (
-                  <div key={index} className="flex items-center justify-between text-xs">
-                    <span className="flex items-center space-x-1">
-                      {player.role === 'master' && <span className="text-caramel">👑</span>}
-                      <span className="text-dark-chocolate">{player.name}</span>
-                    </span>
-                    <div className="flex items-center space-x-2">
-                      {char && (
-                        <button
-                          onClick={() => {
-                            setSelectedCharacter(char);
-                            setShowCharacterSheet(true);
-                          }}
-                          className="text-walnut/40 hover:text-caramel transition-colors"
-                          title="Просмотреть персонажа"
-                        >
-                          <Eye className="w-3 h-3" />
-                        </button>
-                      )}
-                      <span className={`w-2 h-2 rounded-full ${player.role === 'master' ? 'bg-caramel' : 'bg-green-500'}`}></span>
-                    </div>
-                  </div>
-                );
-              })}
+              {players.map((player, index) => (
+                <div key={index} className="flex items-center justify-between text-xs">
+                  <span className="flex items-center space-x-1">
+                    {player.role === 'master' && <span className="text-caramel">👑</span>}
+                    <span className="text-dark-chocolate">{player.name}</span>
+                  </span>
+                  <span className={`w-2 h-2 rounded-full ${player.role === 'master' ? 'bg-caramel' : 'bg-green-500'}`}></span>
+                </div>
+              ))}
             </div>
           </div>
         </div>
@@ -204,7 +230,7 @@ const Master = () => {
         <div className="w-80 flex flex-col">
           <Chat
             messages={messages}
-            onSendMessage={sendMessage}
+            onSendMessage={send}
             currentUserName={masterName || 'Мастер'}
             className="flex-1"
             maxHeight="calc(100vh - 200px)"
@@ -227,7 +253,7 @@ const Master = () => {
         <DiceRoller
           onRoll={handleRoll}
           onClose={() => setShowDiceRoller(false)}
-          userId={`master_${room.code}`}
+          userId={userId}
           userName={masterName || 'Мастер'}
         />
       )}
