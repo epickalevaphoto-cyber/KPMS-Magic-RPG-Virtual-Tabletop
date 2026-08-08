@@ -1,9 +1,8 @@
-import React from 'react';
 import { cn } from '../../utils/cn';
 
 interface CardProps extends React.HTMLAttributes<HTMLDivElement> {}
 
-const Card: React.FC<CardProps> = ({ className, children, ...props }) => {
+const Card = ({ className, children, ...props }: CardProps) => {
   return (
     <div
       className={cn(
