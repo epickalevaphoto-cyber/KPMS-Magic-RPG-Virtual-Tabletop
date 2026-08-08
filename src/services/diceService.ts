@@ -2,7 +2,7 @@ export interface DiceRoll {
   id: string;
   userId: string;
   userName: string;
-  diceType: 'd10' | 'd100' | 'custom';
+  diceType: 'd6' | 'd10' | 'd100' | 'custom';
   diceCount: number;
   modifier: number;
   results: number[];
@@ -23,6 +23,24 @@ export function rollDice(count: number, sides: number): number[] {
     results.push(rollSingleDice(sides));
   }
   return results;
+}
+
+// Бросок d6
+export function rollD6(count: number = 1, modifier: number = 0): DiceRoll {
+  const results = rollDice(count, 6);
+  const total = results.reduce((sum, r) => sum + r, 0) + modifier;
+  
+  return {
+    id: `roll_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+    userId: 'system',
+    userName: 'Система',
+    diceType: 'd6',
+    diceCount: count,
+    modifier: modifier,
+    results: results,
+    total: total,
+    timestamp: Date.now()
+  };
 }
 
 // Бросок d10
@@ -104,7 +122,6 @@ export function addToHistory(roll: DiceRoll): void {
   if (rollHistory.length > 100) {
     rollHistory = rollHistory.slice(0, 100);
   }
-  // Сохраняем в localStorage
   try {
     localStorage.setItem('kpms_roll_history', JSON.stringify(rollHistory));
   } catch (e) {
@@ -137,7 +154,7 @@ export function formatRollText(roll: DiceRoll): string {
   if (roll.diceType === 'd100') {
     text += ` d100`;
   } else {
-    text += ` ${roll.diceCount}d10`;
+    text += ` ${roll.diceCount}${roll.diceType}`;
   }
   
   if (roll.modifier !== 0) {
