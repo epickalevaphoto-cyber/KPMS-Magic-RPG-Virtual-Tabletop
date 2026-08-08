@@ -1,9 +1,7 @@
-import { Character, InventoryItem, SKILLS_LIST } from '../types/character';
+import { Character, InventoryItem } from '../types/character';
 
-// Хранилище персонажей
 let characters: Map<string, Character> = new Map();
 
-// Создание нового персонажа
 export function createCharacter(
   userId: string,
   roomId: string,
@@ -19,7 +17,6 @@ export function createCharacter(
     house: '',
     origin: '',
     
-    // 11 баллов для распределения
     vitality: 1,
     speed: 1,
     intelligence: 1,
@@ -41,24 +38,20 @@ export function createCharacter(
   return character;
 }
 
-// Получение персонажа по ID
 export function getCharacter(id: string): Character | null {
   return characters.get(id) || null;
 }
 
-// Получение персонажей в комнате
 export function getCharactersByRoom(roomId: string): Character[] {
   return Array.from(characters.values()).filter(c => c.roomId === roomId);
 }
 
-// Получение персонажа по userId и roomId
 export function getCharacterByUser(userId: string, roomId: string): Character | null {
   return Array.from(characters.values()).find(
     c => c.userId === userId && c.roomId === roomId
   ) || null;
 }
 
-// Обновление персонажа
 export function updateCharacter(id: string, updates: Partial<Character>): Character | null {
   const character = characters.get(id);
   if (!character) return null;
@@ -68,7 +61,6 @@ export function updateCharacter(id: string, updates: Partial<Character>): Charac
   return updated;
 }
 
-// Обновление навыков
 export function updateSkill(characterId: string, skillName: string, value: number): Character | null {
   const character = characters.get(characterId);
   if (!character) return null;
@@ -78,7 +70,6 @@ export function updateSkill(characterId: string, skillName: string, value: numbe
   return character;
 }
 
-// Добавление заклинания
 export function addSpell(characterId: string, spell: string): Character | null {
   const character = characters.get(characterId);
   if (!character) return null;
@@ -90,7 +81,6 @@ export function addSpell(characterId: string, spell: string): Character | null {
   return character;
 }
 
-// Удаление заклинания
 export function removeSpell(characterId: string, spell: string): Character | null {
   const character = characters.get(characterId);
   if (!character) return null;
@@ -100,7 +90,6 @@ export function removeSpell(characterId: string, spell: string): Character | nul
   return character;
 }
 
-// Добавление предмета в инвентарь
 export function addItem(characterId: string, item: InventoryItem): Character | null {
   const character = characters.get(characterId);
   if (!character) return null;
@@ -116,7 +105,6 @@ export function addItem(characterId: string, item: InventoryItem): Character | n
   return character;
 }
 
-// Удаление предмета из инвентаря
 export function removeItem(characterId: string, itemId: string): Character | null {
   const character = characters.get(characterId);
   if (!character) return null;
@@ -126,7 +114,6 @@ export function removeItem(characterId: string, itemId: string): Character | nul
   return character;
 }
 
-// Распределение характеристик (11 баллов)
 export function distributeAttributes(
   characterId: string,
   vitality: number,
@@ -142,7 +129,9 @@ export function distributeAttributes(
   return updateCharacter(characterId, { vitality, speed, intelligence, knowledge, focus });
 }
 
-// Удаление персонажа
+export function deleteCharacter(id: string): boolean {
+  return characters.delete(id);
+}
 export function deleteCharacter(id: string): boolean {
   return characters.delete(id);
 }
