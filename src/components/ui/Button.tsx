@@ -12,12 +12,12 @@ const Button = ({
   children, 
   ...props 
 }: ButtonProps) => {
-  const baseStyles = "inline-flex items-center justify-center rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gold focus:ring-offset-2 disabled:opacity-50";
+  const baseStyles = "inline-flex items-center justify-center rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-caramel focus:ring-offset-2 disabled:opacity-50";
   
   const variants = {
-    primary: "bg-gold text-white hover:bg-gold-dark shadow-lg hover:shadow-xl",
-    secondary: "bg-white text-brown-dark border border-gold hover:bg-krem",
-    ghost: "bg-transparent text-ink hover:bg-white/50",
+    primary: "bg-caramel text-soft-ivory hover:bg-walnut shadow-lg hover:shadow-xl",
+    secondary: "bg-soft-ivory text-dark-chocolate border border-caramel hover:bg-vanilla-cream",
+    ghost: "bg-transparent text-dark-chocolate hover:bg-vanilla-cream/50",
   };
 
   const sizes = {
