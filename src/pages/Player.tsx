@@ -11,8 +11,7 @@ import Chat from '../components/chat/Chat';
 import { 
   getRoomSupabase, 
   getPlayersSupabase,
-  subscribeToPlayersSupabase,
-  subscribeToMessagesSupabase
+  subscribeToPlayersSupabase
 } from '../services/supabase';
 import { useSupabaseChat } from '../hooks/useSupabaseChat';
 import { 
@@ -44,7 +43,6 @@ const Player = () => {
   const [loading, setLoading] = useState(true);
   const userId = getPlayerId();
 
-  // Чат через Supabase
   const { messages, send, sendRoll } = useSupabaseChat(code || '', userId, playerName || 'Игрок');
 
   useEffect(() => {
@@ -56,7 +54,6 @@ const Player = () => {
     const loadData = async () => {
       setLoading(true);
       
-      // Загружаем комнату
       const roomData = await getRoomSupabase(code);
       if (!roomData) {
         navigate('/');
@@ -64,11 +61,9 @@ const Player = () => {
       }
       setRoom(roomData);
 
-      // Загружаем игроков
       const playersData = await getPlayersSupabase(code);
       setPlayers(playersData);
 
-      // Находим игрока
       const player = playersData.find(p => p.user_id === userId);
       if (player) {
         setPlayerName(player.name);
@@ -79,7 +74,6 @@ const Player = () => {
 
     loadData();
 
-    // Подписка на игроков
     const playersSubscription = subscribeToPlayersSupabase(code, (payload) => {
       if (payload.eventType === 'INSERT') {
         setPlayers(prev => [...prev, payload.new]);
