@@ -5,6 +5,17 @@ import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
 import { createRoom, joinRoom, getRooms, removeRoom, clearAllRooms, removeOldRooms } from '../services/roomService';
 
+// ⬇️ ИЗОБРАЖЕНИЕ ДЛЯ ФОНА ⬇️
+// ВСТАВЬТЕ ССЫЛКУ НА ВАШЕ ИЗОБРАЖЕНИЕ ЗДЕСЬ:
+const BACKGROUND_IMAGE = 'https://i.pinimg.com/1200x/ea/46/c3/ea46c3575dcdd0645a20408c366ff700.jpg';
+// Другие варианты фонов:
+// Замок: https://images.unsplash.com/photo-1519681393784-d120267933ba?w=1920&q=80
+// Звезды: https://images.unsplash.com/photo-1506703719100-a0f3a48c6f1a?w=1920&q=80
+// Лес: https://images.unsplash.com/photo-1518495973542-4542c06a5843?w=1920&q=80
+// Волшебный лес: https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1920&q=80
+// Свечи: https://images.unsplash.com/photo-1519055548599-6d4d129508c4?w=1920&q=80
+// Туманный замок: https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=1920&q=80
+
 const Home = () => {
   const navigate = useNavigate();
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -101,14 +112,21 @@ const Home = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-krem bg-cover bg-center bg-no-repeat relative"
-         style={{
-           backgroundImage: 'url("https://images.unsplash.com/photo-1500462918059-b1a0cb512f1d?w=1920&q=80")',
-           backgroundBlendMode: 'overlay',
-           backgroundColor: 'rgba(245, 239, 230, 0.85)'
-         }}>
-      <div className="absolute inset-0 bg-gradient-to-b from-krem/30 via-transparent to-krem/50 pointer-events-none" />
+    <div className="min-h-screen flex items-center justify-center relative overflow-hidden">
+      {/* Фоновое изображение с размытием */}
+      <div 
+        className="absolute inset-0 w-full h-full bg-cover bg-center bg-no-repeat"
+        style={{
+          backgroundImage: `url("${BACKGROUND_IMAGE}")`,
+          filter: 'blur(10px)',
+          transform: 'scale(1.05)',
+        }}
+      />
       
+      {/* Прозрачный слой поверх фона */}
+      <div className="absolute inset-0 bg-krem/70 backdrop-blur-[2px]" />
+
+      {/* Контент */}
       <div className="text-center max-w-3xl mx-auto px-4 py-12 relative z-10">
         <div className="mb-12">
           <h1 className="font-serif text-8xl md:text-9xl font-bold text-ink tracking-wider mb-2 magic-text"
@@ -399,6 +417,9 @@ const Home = () => {
       )}
     </div>
   );
+};
+
+export default Home;
 };
 
 export default Home;
