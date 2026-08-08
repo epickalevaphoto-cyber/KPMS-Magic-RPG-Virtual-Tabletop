@@ -3,22 +3,16 @@ import { useNavigate } from 'react-router-dom';
 import { Wand2, Users, Plus, LogIn, X, List, Copy, Trash2, AlertCircle, Key, Lock, Unlock, Shield } from 'lucide-react';
 import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
-import { createRoom, joinRoom, getRooms, removeRoom, clearAllRooms, removeOldRooms } from '../services/roomService';
+import { 
+  createRoomSupabase, 
+  joinRoomSupabase, 
+  getRoomsSupabase, 
+  deleteRoomSupabase,
+  isSupabaseConnected,
+  getSupabaseStatus
+} from '../services/supabase';
 
-const BACKGROUND_IMAGE = 'https://i.pinimg.com/1200x/45/61/46/456146dc3b37b62b8f3c23cb903cf751.jpg';
-
-// Получаем ID мастера из localStorage (устанавливается при создании комнаты)
-const getMasterId = (): string | null => {
-  return localStorage.getItem('kpms_master_id');
-};
-
-const setMasterId = (id: string): void => {
-  localStorage.setItem('kpms_master_id', id);
-};
-
-const clearMasterId = (): void => {
-  localStorage.removeItem('kpms_master_id');
-};
+const BACKGROUND_IMAGE = 'https://images.unsplash.com/photo-1519681393784-d120267933ba?w=1920&q=80';
 
 const Home = () => {
   const navigate = useNavigate();
@@ -34,37 +28,48 @@ const Home = () => {
   const [error, setError] = useState('');
   const [rooms, setRooms] = useState<any[]>([]);
   const [showConfirmDelete, setShowConfirmDelete] = useState<string | null>(null);
-  const [currentMasterId, setCurrentMasterId] = useState<string | null>(getMasterId());
+  const [loading, setLoading] = useState(false);
+  const [supabaseStatus, setSupabaseStatus] = useState(getSupabaseStatus());
 
+  // Загрузка комнат
   useEffect(() => {
-    const loadRooms = () => {
-      const allRooms = getRooms();
+    const loadRooms = async () => {
+      const allRooms = await getRoomsSupabase();
       setRooms(allRooms);
     };
     loadRooms();
     
-    const interval = setInterval(loadRooms, 5000);
+    // Обновляем список каждые 10 секунд
+    const interval = setInterval(loadRooms, 10000);
     return () => clearInterval(interval);
   }, []);
 
-  const handleCreateRoom = () => {
+  const handleCreateRoom = async () => {
     if (!masterName.trim()) {
       setError('Введите ваше имя');
       return;
     }
 
-    const room = createRoom(masterName.trim(), roomName.trim() || 'Новая игра', roomPassword.trim());
-    
-    // Сохраняем ID мастера
-    setMasterId(room.masterId);
-    setCurrentMasterId(room.masterId);
-    
+    setLoading(true);
+    const { room, error: createError } = await createRoomSupabase(
+      masterName.trim(),
+      roomName.trim() || 'Новая игра',
+      roomPassword.trim()
+    );
+
+    setLoading(false);
+
+    if (createError || !room) {
+      setError(createError || 'Ошибка создания комнаты');
+      return;
+    }
+
     setShowCreateModal(false);
     setError('');
     navigate(`/master/${room.code}`);
   };
 
-  const handleJoinRoom = () => {
+  const handleJoinRoom = async () => {
     if (!playerName.trim()) {
       setError('Введите ваше имя');
       return;
@@ -75,10 +80,17 @@ const Home = () => {
       return;
     }
 
-    const room = joinRoom(roomCode.trim(), joinPassword.trim(), playerName.trim());
-    
-    if (!room) {
-      setError('Комната не найдена, пароль неверный или уже завершена');
+    setLoading(true);
+    const { room, error: joinError } = await joinRoomSupabase(
+      roomCode.trim(),
+      joinPassword.trim(),
+      playerName.trim()
+    );
+
+    setLoading(false);
+
+    if (joinError || !room) {
+      setError(joinError || 'Ошибка входа в комнату');
       return;
     }
 
@@ -87,58 +99,19 @@ const Home = () => {
     navigate(`/player/${room.code}`);
   };
 
-  const handleJoinFromList = (code: string) => {
-    setRoomCode(code);
-    setJoinPassword(''); // Очищаем пароль, чтобы игрок ввел его сам
-    setShowRoomList(false);
-    setShowJoinModal(true);
+  const handleDeleteRoom = async (code: string) => {
+    setLoading(true);
+    const success = await deleteRoomSupabase(code);
+    setLoading(false);
+    
+    if (success) {
+      setRooms(rooms.filter(r => r.code !== code));
+    }
+    setShowConfirmDelete(null);
   };
 
   const copyCode = (code: string) => {
     navigator.clipboard.writeText(code);
-  };
-
-  const handleDeleteRoom = (code: string) => {
-    removeRoom(code);
-    setRooms(getRooms());
-    setShowConfirmDelete(null);
-  };
-
-  const handleClearAllRooms = () => {
-    // Только мастер может удалить все комнаты
-    if (!currentMasterId) {
-      alert('Только мастер может удалять комнаты');
-      return;
-    }
-    
-    if (window.confirm('Вы уверены, что хотите удалить ВСЕ комнаты? Это действие нельзя отменить.')) {
-      clearAllRooms();
-      setRooms(getRooms());
-      clearMasterId();
-      setCurrentMasterId(null);
-    }
-  };
-
-  const handleRemoveOldRooms = () => {
-    // Только мастер может удалять старые комнаты
-    if (!currentMasterId) {
-      alert('Только мастер может удалять комнаты');
-      return;
-    }
-    
-    const removed = removeOldRooms(24);
-    setRooms(getRooms());
-    if (removed > 0) {
-      alert(`Удалено ${removed} старых комнат (старше 24 часов)`);
-    } else {
-      alert('Нет старых комнат для удаления');
-    }
-  };
-
-  // Проверяем, может ли пользователь удалить комнату
-  const canDeleteRoom = (room: any): boolean => {
-    // Только мастер, создавший комнату, может ее удалить
-    return currentMasterId === room.masterId;
   };
 
   return (
@@ -155,6 +128,17 @@ const Home = () => {
       <div className="absolute inset-0 bg-soft-ivory/75 backdrop-blur-[2px]" />
 
       <div className="text-center max-w-3xl mx-auto px-4 py-12 relative z-10">
+        {/* Статус Supabase */}
+        <div className="mb-4 text-xs">
+          <span className={`px-2 py-1 rounded-full ${
+            supabaseStatus.connected 
+              ? 'bg-green-500/10 text-green-600' 
+              : 'bg-yellow-500/10 text-yellow-600'
+          }`}>
+            {supabaseStatus.message}
+          </span>
+        </div>
+
         <div className="mb-12">
           <div className="flex items-center justify-center mb-4">
             <div className="w-16 h-16 rounded-full bg-caramel/10 flex items-center justify-center">
@@ -185,9 +169,9 @@ const Home = () => {
             </div>
             <h2 className="font-serif text-2xl font-semibold text-dark-chocolate mb-2">Создать игру</h2>
             <p className="text-walnut/70 text-sm mb-6">Начните новое приключение</p>
-            <Button variant="primary" size="lg" className="w-full" onClick={() => setShowCreateModal(true)}>
+            <Button variant="primary" size="lg" className="w-full" onClick={() => setShowCreateModal(true)} disabled={loading}>
               <Wand2 className="w-5 h-5 mr-2" />
-              Создать
+              {loading ? 'Загрузка...' : 'Создать'}
             </Button>
           </Card>
 
@@ -197,13 +181,14 @@ const Home = () => {
             </div>
             <h2 className="font-serif text-2xl font-semibold text-dark-chocolate mb-2">Войти в игру</h2>
             <p className="text-walnut/70 text-sm mb-6">Присоединиться к сессии</p>
-            <Button variant="secondary" size="lg" className="w-full" onClick={() => setShowJoinModal(true)}>
+            <Button variant="secondary" size="lg" className="w-full" onClick={() => setShowJoinModal(true)} disabled={loading}>
               <Users className="w-5 h-5 mr-2" />
-              Войти
+              {loading ? 'Загрузка...' : 'Войти'}
             </Button>
           </Card>
         </div>
 
+        {/* Список комнат */}
         <div className="mt-6 flex flex-col items-center space-y-2">
           <button
             onClick={() => setShowRoomList(!showRoomList)}
@@ -212,23 +197,6 @@ const Home = () => {
             <List className="w-4 h-4" />
             <span>Активные комнаты ({rooms.length})</span>
           </button>
-
-          {rooms.length > 0 && currentMasterId && (
-            <div className="flex items-center space-x-4 text-xs">
-              <button
-                onClick={handleRemoveOldRooms}
-                className="text-walnut/40 hover:text-caramel transition-colors"
-              >
-                🕐 Удалить старые (24ч)
-              </button>
-              <button
-                onClick={handleClearAllRooms}
-                className="text-red-400/60 hover:text-red-600 transition-colors"
-              >
-                🗑️ Удалить все
-              </button>
-            </div>
-          )}
         </div>
 
         {showRoomList && (
@@ -241,65 +209,59 @@ const Home = () => {
               <p className="text-sm text-walnut/40">Нет активных комнат</p>
             ) : (
               <div className="space-y-2">
-                {rooms.map((room, index) => {
-                  const isMaster = canDeleteRoom(room);
-                  return (
-                    <div key={index} className="flex items-center justify-between bg-vanilla-cream/30 rounded-lg px-4 py-2 hover:bg-vanilla-cream/50 transition-colors">
-                      <div className="text-left">
-                        <div className="flex items-center space-x-2">
-                          <span className="font-mono font-bold text-caramel">{room.code}</span>
-                          {room.password ? (
-                            <Lock className="w-3 h-3 text-amber-500" />
-                          ) : (
-                            <Unlock className="w-3 h-3 text-green-500" />
-                          )}
-                          {isMaster && (
-                            <span className="text-[10px] text-caramel/60 bg-caramel/10 px-1.5 py-0.5 rounded-full">
-                              👑 Мастер
-                            </span>
-                          )}
-                          <span className="text-xs text-walnut/40">
-                            {new Date(room.createdAt).toLocaleTimeString()}
-                          </span>
-                        </div>
-                        <div className="text-xs text-walnut/60">{room.name}</div>
-                        <div className="text-xs text-walnut/40">Игроков: {room.players.length}</div>
-                      </div>
+                {rooms.map((room, index) => (
+                  <div key={index} className="flex items-center justify-between bg-vanilla-cream/30 rounded-lg px-4 py-2 hover:bg-vanilla-cream/50 transition-colors">
+                    <div className="text-left">
                       <div className="flex items-center space-x-2">
-                        <button
-                          onClick={() => copyCode(room.code)}
-                          className="p-1 text-walnut/40 hover:text-caramel transition-colors"
-                          title="Скопировать код"
-                        >
-                          <Copy className="w-4 h-4" />
-                        </button>
-                        <Button
-                          variant="primary"
-                          size="sm"
-                          onClick={() => handleJoinFromList(room.code)}
-                        >
-                          Войти
-                        </Button>
-                        {isMaster && (
-                          <button
-                            onClick={() => setShowConfirmDelete(room.code)}
-                            className="p-1 text-red-400 hover:text-red-600 transition-colors"
-                            title="Удалить комнату"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                        <span className="font-mono font-bold text-caramel">{room.code}</span>
+                        {room.password ? (
+                          <Lock className="w-3 h-3 text-amber-500" />
+                        ) : (
+                          <Unlock className="w-3 h-3 text-green-500" />
                         )}
+                        <span className="text-xs text-walnut/40">
+                          {new Date(room.created_at).toLocaleTimeString()}
+                        </span>
                       </div>
+                      <div className="text-xs text-walnut/60">{room.name}</div>
+                      <div className="text-xs text-walnut/40">Статус: {room.status}</div>
                     </div>
-                  );
-                })}
+                    <div className="flex items-center space-x-2">
+                      <button
+                        onClick={() => copyCode(room.code)}
+                        className="p-1 text-walnut/40 hover:text-caramel transition-colors"
+                        title="Скопировать код"
+                      >
+                        <Copy className="w-4 h-4" />
+                      </button>
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        onClick={() => {
+                          setRoomCode(room.code);
+                          setShowRoomList(false);
+                          setShowJoinModal(true);
+                        }}
+                      >
+                        Войти
+                      </Button>
+                      <button
+                        onClick={() => setShowConfirmDelete(room.code)}
+                        className="p-1 text-red-400 hover:text-red-600 transition-colors"
+                        title="Удалить комнату"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
           </div>
         )}
 
         <div className="mt-8 text-walnut/30 text-xs tracking-widest">
-          <span>✦ v0.2.1 ✦</span>
+          <span>✦ v0.3.0 — Мультиплеер (Supabase) ✦</span>
         </div>
       </div>
 
@@ -356,9 +318,9 @@ const Home = () => {
                 <p className="text-red-500 text-sm">{error}</p>
               )}
 
-              <Button variant="primary" size="lg" className="w-full" onClick={handleCreateRoom}>
+              <Button variant="primary" size="lg" className="w-full" onClick={handleCreateRoom} disabled={loading}>
                 <Wand2 className="w-5 h-5 mr-2" />
-                Создать
+                {loading ? 'Создание...' : 'Создать'}
               </Button>
             </div>
           </div>
@@ -418,9 +380,9 @@ const Home = () => {
                 <p className="text-red-500 text-sm">{error}</p>
               )}
 
-              <Button variant="primary" size="lg" className="w-full" onClick={handleJoinRoom}>
+              <Button variant="primary" size="lg" className="w-full" onClick={handleJoinRoom} disabled={loading}>
                 <Users className="w-5 h-5 mr-2" />
-                Войти
+                {loading ? 'Вход...' : 'Войти'}
               </Button>
             </div>
           </div>
@@ -451,9 +413,10 @@ const Home = () => {
                 variant="primary"
                 className="flex-1 bg-red-500 hover:bg-red-600"
                 onClick={() => handleDeleteRoom(showConfirmDelete)}
+                disabled={loading}
               >
                 <Trash2 className="w-4 h-4 mr-2" />
-                Удалить
+                {loading ? 'Удаление...' : 'Удалить'}
               </Button>
             </div>
           </div>
