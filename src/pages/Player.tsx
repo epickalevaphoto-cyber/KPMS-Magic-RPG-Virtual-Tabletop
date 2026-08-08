@@ -2,10 +2,13 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { 
   LogOut, BookOpen, Sparkles, FlaskConical, Dice5, 
-  Backpack, Settings, Users, User, Plus 
+  Backpack, Settings, Users, User, Plus, MessageSquare
 } from 'lucide-react';
 import Button from '../components/ui/Button';
 import CharacterSheet from '../components/character/CharacterSheet';
+import DiceRoller from '../components/dice/DiceRoller';
+import Chat from '../components/chat/Chat';
+import { useChat } from '../hooks/useChat';
 import { getRoom } from '../services/roomService';
 import { 
   getCharacterByUser, 
@@ -29,8 +32,14 @@ const Player = () => {
   const [showCharacterSheet, setShowCharacterSheet] = useState(false);
   const [selectedCharacter, setSelectedCharacter] = useState<Character | null>(null);
   const [showCharacterList, setShowCharacterList] = useState(false);
+  const [showDiceRoller, setShowDiceRoller] = useState(false);
+  const [showChat, setShowChat] = useState(false);
   const [room, setRoom] = useState<any>(null);
   const userId = getPlayerId();
+  const [playerName, setPlayerName] = useState('');
+
+  // Чат
+  const { messages, sendMessage, sendRollMessage } = useChat(code || '', playerName || 'Игрок');
 
   useEffect(() => {
     if (code) {
@@ -39,11 +48,17 @@ const Player = () => {
       
       if (!currentRoom) {
         navigate('/');
+      } else {
+        // Находим имя игрока в комнате
+        const player = currentRoom.players.find(p => p.id === userId);
+        if (player) {
+          setPlayerName(player.name);
+        }
       }
     } else {
       navigate('/');
     }
-  }, [code, navigate]);
+  }, [code, navigate, userId]);
 
   if (!room) {
     return (
@@ -71,6 +86,10 @@ const Player = () => {
     setSelectedCharacter(char);
     setShowCharacterSheet(true);
     setShowCharacterList(false);
+  };
+
+  const handleRoll = (text: string) => {
+    sendRollMessage(text);
   };
 
   return (
@@ -103,25 +122,32 @@ const Player = () => {
         </div>
       </header>
 
-      <main className="flex-1 relative bg-walnut/5 m-2 rounded-xl border border-caramel/20 shadow-inner overflow-hidden">
-        <div className="absolute inset-0 flex items-center justify-center text-walnut/30">
-          <div className="text-center">
-            <p className="text-6xl mb-4">🗺️</p>
-            <p className="font-serif text-2xl text-dark-chocolate">{room.name}</p>
-            <p className="text-sm text-walnut">Игровая карта</p>
-            <p className="text-xs mt-2 text-walnut/30">Код комнаты: {room.code}</p>
+      <main className="flex-1 flex gap-2 p-2 overflow-hidden">
+        {/* Карта */}
+        <div className="flex-1 relative bg-walnut/5 rounded-xl border border-caramel/20 shadow-inner overflow-hidden">
+          <div className="absolute inset-0 flex items-center justify-center text-walnut/30">
+            <div className="text-center">
+              <p className="text-6xl mb-4">🗺️</p>
+              <p className="font-serif text-2xl text-dark-chocolate">{room.name}</p>
+              <p className="text-sm text-walnut">Игровая карта</p>
+              <p className="text-xs mt-2 text-walnut/30">Код комнаты: {room.code}</p>
+            </div>
           </div>
         </div>
-        <div className="absolute bottom-4 right-4 w-64 h-48 bg-soft-ivory/80 backdrop-blur-sm rounded-lg shadow-lg border border-caramel/20 p-3 flex flex-col">
-          <p className="text-xs font-semibold text-dark-chocolate/70 border-b border-caramel/20 pb-1 mb-2">Чат</p>
-          <div className="flex-1 overflow-y-auto text-xs space-y-1 text-walnut/60">
-            <p>Добро пожаловать в игру!</p>
-            <p>Мастер: Вы просыпаетесь в Большом зале...</p>
-          </div>
-          <input type="text" placeholder="Написать..." className="mt-2 w-full text-xs rounded border border-caramel/30 bg-transparent px-2 py-1 focus:outline-none focus:border-caramel" />
+
+        {/* Правая панель: Чат */}
+        <div className="w-80 flex flex-col">
+          <Chat
+            messages={messages}
+            onSendMessage={sendMessage}
+            currentUserName={playerName || 'Игрок'}
+            className="flex-1"
+            maxHeight="calc(100vh - 200px)"
+          />
         </div>
       </main>
 
+      {/* Нижняя панель */}
       <footer className="bg-soft-ivory/80 backdrop-blur-sm border-t border-caramel/20 p-2 flex justify-around items-center">
         <button
           onClick={() => {
@@ -147,7 +173,10 @@ const Player = () => {
           <FlaskConical className="w-5 h-5" />
           <span className="text-[10px] font-medium mt-0.5">Зелья</span>
         </button>
-        <button className="flex flex-col items-center text-caramel relative">
+        <button 
+          onClick={() => setShowDiceRoller(true)}
+          className="flex flex-col items-center text-caramel relative"
+        >
           <div className="w-12 h-12 -mt-4 bg-caramel rounded-full flex items-center justify-center shadow-lg hover:bg-walnut transition-colors">
             <Dice5 className="w-6 h-6 text-soft-ivory" />
           </div>
@@ -163,6 +192,7 @@ const Player = () => {
         </button>
       </footer>
 
+      {/* Модалки */}
       {showCharacterList && (
         <div className="absolute right-4 top-16 bg-soft-ivory rounded-xl shadow-xl border border-caramel/20 p-4 min-w-64 z-10">
           <h4 className="font-serif text-sm font-semibold text-dark-chocolate mb-3">Мои персонажи</h4>
@@ -205,6 +235,15 @@ const Player = () => {
             setShowCharacterList(false);
           }}
           readOnly={false}
+        />
+      )}
+
+      {showDiceRoller && (
+        <DiceRoller
+          onRoll={handleRoll}
+          onClose={() => setShowDiceRoller(false)}
+          userId={userId}
+          userName={playerName || 'Игрок'}
         />
       )}
     </div>
