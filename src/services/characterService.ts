@@ -1,6 +1,32 @@
 import { Character, InventoryItem } from '../types/character';
 
-let characters: Map<string, Character> = new Map();
+const STORAGE_KEY = 'kpms_characters';
+
+// Загрузка персонажей из localStorage
+function loadCharacters(): Map<string, Character> {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) {
+      const data = JSON.parse(stored);
+      return new Map(Object.entries(data));
+    }
+  } catch (e) {
+    console.error('Error loading characters from storage:', e);
+  }
+  return new Map();
+}
+
+// Сохранение персонажей в localStorage
+function saveCharacters(characters: Map<string, Character>): void {
+  try {
+    const data = Object.fromEntries(characters);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  } catch (e) {
+    console.error('Error saving characters to storage:', e);
+  }
+}
+
+let characters: Map<string, Character> = loadCharacters();
 
 export function createCharacter(
   userId: string,
@@ -35,6 +61,7 @@ export function createCharacter(
   };
 
   characters.set(character.id, character);
+  saveCharacters(characters);
   return character;
 }
 
@@ -58,6 +85,7 @@ export function updateCharacter(id: string, updates: Partial<Character>): Charac
   
   const updated = { ...character, ...updates };
   characters.set(id, updated);
+  saveCharacters(characters);
   return updated;
 }
 
@@ -67,6 +95,7 @@ export function updateSkill(characterId: string, skillName: string, value: numbe
   
   character.skills[skillName] = value;
   characters.set(characterId, character);
+  saveCharacters(characters);
   return character;
 }
 
@@ -77,6 +106,7 @@ export function addSpell(characterId: string, spell: string): Character | null {
   if (!character.spells.includes(spell)) {
     character.spells.push(spell);
     characters.set(characterId, character);
+    saveCharacters(characters);
   }
   return character;
 }
@@ -87,6 +117,7 @@ export function removeSpell(characterId: string, spell: string): Character | nul
   
   character.spells = character.spells.filter(s => s !== spell);
   characters.set(characterId, character);
+  saveCharacters(characters);
   return character;
 }
 
@@ -102,6 +133,7 @@ export function addItem(characterId: string, item: InventoryItem): Character | n
   }
   
   characters.set(characterId, character);
+  saveCharacters(characters);
   return character;
 }
 
@@ -111,6 +143,7 @@ export function removeItem(characterId: string, itemId: string): Character | nul
   
   character.inventory = character.inventory.filter(i => i.id !== itemId);
   characters.set(characterId, character);
+  saveCharacters(characters);
   return character;
 }
 
@@ -129,7 +162,10 @@ export function distributeAttributes(
   return updateCharacter(characterId, { vitality, speed, intelligence, knowledge, focus });
 }
 
-// Удаление персонажа (только одна функция)
 export function deleteCharacter(id: string): boolean {
-  return characters.delete(id);
+  const result = characters.delete(id);
+  if (result) {
+    saveCharacters(characters);
+  }
+  return result;
 }
