@@ -4,12 +4,15 @@ import { createClient } from '@supabase/supabase-js';
 // 1. ПОДКЛЮЧЕНИЕ К SUPABASE
 // ============================================
 
-import { createClient } from '@supabase/supabase-js';
+// Загружаем переменные окружения
+const supabaseUrl = (import.meta as any).env?.VITE_SUPABASE_URL || '';
+const supabaseAnonKey = (import.meta as any).env?.VITE_SUPABASE_ANON_KEY || '';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+// Проверяем, что переменные заданы
+const isConnected = Boolean(supabaseUrl && supabaseAnonKey);
 
-export const supabase = supabaseUrl && supabaseAnonKey
+// Создаем клиент Supabase (или null, если нет переменных)
+export const supabase = isConnected
   ? createClient(supabaseUrl, supabaseAnonKey)
   : null;
 
@@ -82,6 +85,15 @@ export const getSupabaseStatus = (): { connected: boolean; message: string } => 
 // 4. ФУНКЦИИ ДЛЯ РАБОТЫ С КОМНАТАМИ
 // ============================================
 
+function generateRoomCode(): string {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let code = '';
+  for (let i = 0; i < 6; i++) {
+    code += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return code;
+}
+
 export async function createRoomSupabase(
   masterName: string,
   roomName: string = 'Новая игра',
@@ -108,11 +120,21 @@ export async function createRoomSupabase(
 
     if (roomError) throw roomError;
 
-    // ... добавление игрока
+    const { error: playerError } = await supabase
+      .from('players')
+      .insert({
+        room_code: code,
+        user_id: room.master_id,
+        name: masterName,
+        role: 'master'
+      });
+
+    if (playerError) throw playerError;
+
     return { room, error: null };
   } catch (error: any) {
     console.error('❌ Ошибка создания комнаты:', error);
-    return { room: null, error: error.message };
+    return { room: null, error: error.message || 'Ошибка создания комнаты' };
   }
 }
 
@@ -262,15 +284,6 @@ export async function updateRoomStatusSupabase(
     console.error('❌ Ошибка обновления статуса комнаты:', error);
     return false;
   }
-}
-
-function generateRoomCode(): string {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-  let code = '';
-  for (let i = 0; i < 6; i++) {
-    code += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return code;
 }
 
 // ============================================
@@ -459,71 +472,7 @@ export function subscribeToMessagesSupabase(
 }
 
 // ============================================
-// 7. SQL ДЛЯ СОЗДАНИЯ ТАБЛИЦ
-// ============================================
-
-export const SQL_TABLES = `
--- Таблица комнат
-CREATE TABLE IF NOT EXISTS rooms (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  code TEXT UNIQUE NOT NULL,
-  password TEXT,
-  name TEXT NOT NULL,
-  master_id TEXT NOT NULL,
-  status TEXT DEFAULT 'waiting',
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- Таблица игроков
-CREATE TABLE IF NOT EXISTS players (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  room_code TEXT REFERENCES rooms(code) ON DELETE CASCADE,
-  user_id TEXT NOT NULL,
-  name TEXT NOT NULL,
-  role TEXT DEFAULT 'player',
-  joined_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- Таблица сообщений чата
-CREATE TABLE IF NOT EXISTS chat_messages (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  room_code TEXT REFERENCES rooms(code) ON DELETE CASCADE,
-  user_id TEXT NOT NULL,
-  user_name TEXT NOT NULL,
-  text TEXT NOT NULL,
-  type TEXT DEFAULT 'message',
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- Таблица бросков
-CREATE TABLE IF NOT EXISTS rolls (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  room_code TEXT REFERENCES rooms(code) ON DELETE CASCADE,
-  user_id TEXT NOT NULL,
-  user_name TEXT NOT NULL,
-  dice_type TEXT NOT NULL,
-  dice_count INTEGER DEFAULT 1,
-  modifier INTEGER DEFAULT 0,
-  results JSONB NOT NULL,
-  total INTEGER NOT NULL,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- Включаем Realtime
-ALTER TABLE rooms REPLICA IDENTITY FULL;
-ALTER TABLE players REPLICA IDENTITY FULL;
-ALTER TABLE chat_messages REPLICA IDENTITY FULL;
-ALTER TABLE rolls REPLICA IDENTITY FULL;
-
--- Создаем индексы
-CREATE INDEX IF NOT EXISTS idx_rooms_code ON rooms(code);
-CREATE INDEX IF NOT EXISTS idx_players_room_code ON players(room_code);
-CREATE INDEX IF NOT EXISTS idx_chat_messages_room_code ON chat_messages(room_code);
-CREATE INDEX IF NOT EXISTS idx_rolls_room_code ON rolls(room_code);
-`;
-
-// ============================================
-// 8. ЭКСПОРТ
+// 7. ЭКСПОРТ
 // ============================================
 
 export default {
@@ -541,6 +490,5 @@ export default {
   getMessagesSupabase,
   subscribeToRoomSupabase,
   subscribeToPlayersSupabase,
-  subscribeToMessagesSupabase,
-  SQL_TABLES
+  subscribeToMessagesSupabase
 };
