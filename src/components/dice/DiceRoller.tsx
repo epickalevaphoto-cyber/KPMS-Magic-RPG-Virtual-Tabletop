@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Dice5, Plus, Minus, X, History, Trash2 } from 'lucide-react';
 import Button from '../ui/Button';
-import { rollD10, rollD100, rollCheck, addToHistory, formatRollText, getRollHistory, clearRollHistory } from '../../services/diceService';
+import { rollD10, rollD100, rollCheck, addToHistory, formatRollText, getRollHistory, clearRollHistory, rollDice } from '../../services/diceService';
 
 interface DiceRollerProps {
   onRoll?: (text: string) => void;
@@ -10,10 +10,28 @@ interface DiceRollerProps {
   userName?: string;
 }
 
+// Функция для броска d6
+function rollD6(count: number = 1, modifier: number = 0) {
+  const results = rollDice(count, 6);
+  const total = results.reduce((sum, r) => sum + r, 0) + modifier;
+  
+  return {
+    id: `roll_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+    userId: 'system',
+    userName: 'Система',
+    diceType: 'd6' as const,
+    diceCount: count,
+    modifier: modifier,
+    results: results,
+    total: total,
+    timestamp: Date.now()
+  };
+}
+
 const DiceRoller = ({ onRoll, onClose, userId = 'system', userName = 'Игрок' }: DiceRollerProps) => {
   const [diceCount, setDiceCount] = useState(1);
   const [modifier, setModifier] = useState(0);
-  const [diceType, setDiceType] = useState<'d10' | 'd100'>('d10');
+  const [diceType, setDiceType] = useState<'d6' | 'd10' | 'd100'>('d10');
   const [showHistory, setShowHistory] = useState(false);
   const [history, setHistory] = useState(getRollHistory());
   
@@ -27,9 +45,12 @@ const DiceRoller = ({ onRoll, onClose, userId = 'system', userName = 'Игрок
     let roll;
     
     if (showCheckMode) {
+      // Проверка всегда использует d10 по правилам Гарри Поттер
       roll = rollCheck(characteristic, skill, 0, difficulty);
     } else if (diceType === 'd100') {
       roll = rollD100(modifier);
+    } else if (diceType === 'd6') {
+      roll = rollD6(diceCount, modifier);
     } else {
       roll = rollD10(diceCount, modifier);
     }
@@ -44,15 +65,32 @@ const DiceRoller = ({ onRoll, onClose, userId = 'system', userName = 'Игрок
     if (onRoll) {
       onRoll(text);
     }
-    
-    // Закрываем после броска для чистоты UI
-    // onClose();
   };
 
   const handleClearHistory = () => {
     if (window.confirm('Очистить историю бросков?')) {
       clearRollHistory();
       setHistory([]);
+    }
+  };
+
+  // Получаем название кубика для отображения
+  const getDiceLabel = (type: string) => {
+    switch (type) {
+      case 'd6': return 'd6 (стандартный)';
+      case 'd10': return 'd10 (Гарри Поттер)';
+      case 'd100': return 'd100 (процент)';
+      default: return type;
+    }
+  };
+
+  // Получаем описание кубика
+  const getDiceDescription = (type: string) => {
+    switch (type) {
+      case 'd6': return 'Классический шестигранный кубик';
+      case 'd10': return 'Основной кубик для системы Гарри Поттер';
+      case 'd100': return 'Процентный бросок (0-99)';
+      default: return '';
     }
   };
 
@@ -98,31 +136,45 @@ const DiceRoller = ({ onRoll, onClose, userId = 'system', userName = 'Игрок
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-dark-chocolate/80 mb-1">Тип кубика</label>
-              <div className="flex space-x-2">
+              <div className="grid grid-cols-3 gap-2">
+                <button
+                  onClick={() => setDiceType('d6')}
+                  className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    diceType === 'd6'
+                      ? 'bg-caramel text-soft-ivory'
+                      : 'bg-vanilla-cream text-walnut hover:bg-caramel/10'
+                  }`}
+                >
+                  <div>d6</div>
+                  <div className="text-[10px] font-normal opacity-60">стандарт</div>
+                </button>
                 <button
                   onClick={() => setDiceType('d10')}
-                  className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                     diceType === 'd10'
                       ? 'bg-caramel text-soft-ivory'
                       : 'bg-vanilla-cream text-walnut hover:bg-caramel/10'
                   }`}
                 >
-                  d10
+                  <div>d10</div>
+                  <div className="text-[10px] font-normal opacity-60">Гарри Поттер</div>
                 </button>
                 <button
                   onClick={() => setDiceType('d100')}
-                  className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                     diceType === 'd100'
                       ? 'bg-caramel text-soft-ivory'
                       : 'bg-vanilla-cream text-walnut hover:bg-caramel/10'
                   }`}
                 >
-                  d100
+                  <div>d100</div>
+                  <div className="text-[10px] font-normal opacity-60">процент</div>
                 </button>
               </div>
+              <p className="text-xs text-walnut/40 mt-1 text-center">{getDiceDescription(diceType)}</p>
             </div>
 
-            {diceType === 'd10' && (
+            {(diceType === 'd6' || diceType === 'd10') && (
               <div>
                 <label className="block text-sm font-medium text-dark-chocolate/80 mb-1">Количество кубиков</label>
                 <div className="flex items-center space-x-3">
@@ -140,6 +192,16 @@ const DiceRoller = ({ onRoll, onClose, userId = 'system', userName = 'Игрок
                     <Plus className="w-4 h-4 text-walnut" />
                   </button>
                 </div>
+                <p className="text-xs text-walnut/40 mt-1 text-center">
+                  {diceType === 'd6' ? 'Классический бросок' : 'Основной бросок для Гарри Поттер НРИ'}
+                </p>
+              </div>
+            )}
+
+            {diceType === 'd100' && (
+              <div className="bg-vanilla-cream/50 p-3 rounded-lg text-sm text-walnut/70">
+                <p>🎯 Процентный бросок от 1 до 100</p>
+                <p className="text-xs mt-1 text-walnut/40">Используется для случайных событий и таблиц</p>
               </div>
             )}
 
@@ -165,6 +227,11 @@ const DiceRoller = ({ onRoll, onClose, userId = 'system', userName = 'Игрок
         ) : (
           /* Проверка (по правилам Гарри Поттер) */
           <div className="space-y-4">
+            <div className="bg-caramel/10 p-3 rounded-lg border border-caramel/20">
+              <p className="text-sm font-medium text-dark-chocolate">📖 Проверка по правилам Гарри Поттер</p>
+              <p className="text-xs text-walnut/60 mt-1">Формула: 1d10 + Характеристика + Навык</p>
+            </div>
+            
             <div>
               <label className="block text-sm font-medium text-dark-chocolate/80 mb-1">Характеристика (1-10)</label>
               <input
@@ -199,8 +266,8 @@ const DiceRoller = ({ onRoll, onClose, userId = 'system', userName = 'Игрок
               />
             </div>
             <div className="text-xs text-walnut/60 bg-vanilla-cream/50 p-2 rounded-lg">
-              <p>📖 Формула: 1d10 + Характеристика + Навык</p>
-              <p>Целевое значение: {difficulty}</p>
+              <p>🎯 Целевое значение: <span className="font-bold text-dark-chocolate">{difficulty}</span></p>
+              <p className="mt-0.5">💡 1d10 + {characteristic} + {skill} {modifier !== 0 ? `+ ${modifier}` : ''}</p>
             </div>
           </div>
         )}
@@ -238,7 +305,7 @@ const DiceRoller = ({ onRoll, onClose, userId = 'system', userName = 'Игрок
                   {history.slice(0, 20).map((roll) => (
                     <div key={roll.id} className="text-xs text-walnut/60 bg-vanilla-cream/30 rounded px-2 py-1">
                       <span className="text-dark-chocolate font-medium">{roll.userName}</span>
-                      : {roll.results.join(' + ')}
+                      : {roll.diceType} [{roll.results.join(' + ')}]
                       {roll.modifier !== 0 && ` ${roll.modifier > 0 ? '+' : ''}${roll.modifier}`}
                       = <span className="font-bold text-caramel">{roll.total}</span>
                       {'degree' in roll && (
