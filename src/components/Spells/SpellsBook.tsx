@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Search, X, Wand2, BookOpen, Sparkles } from 'lucide-react';
-import Button from '../ui/Button';
+import { Search, X, Wand2, BookOpen } from 'lucide-react';
 import { loadGameData, Spell } from '../../services/dataService';
 
 interface SpellsBookProps {
