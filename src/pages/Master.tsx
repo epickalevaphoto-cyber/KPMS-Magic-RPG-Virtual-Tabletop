@@ -1,6 +1,9 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import { LogOut, Users, Map, Settings, BookOpen, Sparkles, FlaskConical, Dice5, Copy, Check, Key, FileText } from 'lucide-react';
+import { 
+  LogOut, Users, Map, Settings, BookOpen, Sparkles, 
+  FlaskConical, Dice5, Copy, Check, Key, FileText, X
+} from 'lucide-react';
 import Button from '../components/ui/Button';
 import CharacterSheet from '../components/character/CharacterSheet';
 import DiceRoller from '../components/dice/DiceRoller';
@@ -8,6 +11,8 @@ import Chat from '../components/chat/Chat';
 import GameMap from '../components/map/GameMap';
 import RulesBook from '../components/rules/RulesBook';
 import SessionLog from '../components/session/SessionLog';
+import SpellsBook from '../components/Spells/SpellsBook';
+import PotionsBook from '../components/Potions/PotionsBook';
 import { useChat } from '../hooks/useChat';
 import { getRoom, removeRoom } from '../services/roomService';
 import { Character } from '../types/character';
@@ -22,6 +27,9 @@ const Master = () => {
   const [showDiceRoller, setShowDiceRoller] = useState(false);
   const [showRules, setShowRules] = useState(false);
   const [showSessionLog, setShowSessionLog] = useState(false);
+  const [showSpells, setShowSpells] = useState(false);
+  const [showPotions, setShowPotions] = useState(false);
+  const [showInventory, setShowInventory] = useState(false);
   const [room, setRoom] = useState<any>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [masterName, setMasterName] = useState('');
@@ -52,12 +60,24 @@ const Master = () => {
     );
   }
 
-  const handleCopyCode = () => { navigator.clipboard.writeText(room.code); setCopied(true); setTimeout(() => setCopied(false), 2000); };
-  const handleEndGame = () => { if (window.confirm('Вы уверены, что хотите завершить игру?')) { removeRoom(room.code); navigate('/'); } };
+  const handleCopyCode = () => { 
+    navigator.clipboard.writeText(room.code); 
+    setCopied(true); 
+    setTimeout(() => setCopied(false), 2000); 
+  };
+
+  const handleEndGame = () => { 
+    if (window.confirm('Вы уверены, что хотите завершить игру?')) { 
+      removeRoom(room.code); 
+      navigate('/'); 
+    } 
+  };
+
   const handleRoll = (text: string) => sendRollMessage(text);
 
   return (
     <div className="flex flex-col h-screen bg-soft-ivory">
+      {/* Шапка */}
       <header className="flex justify-between items-center px-6 py-3 border-b border-caramel/20 bg-soft-ivory/80 backdrop-blur-sm">
         <div className="flex items-center space-x-4">
           <span className="font-serif text-xl text-dark-chocolate">КПМБ</span>
@@ -92,39 +112,83 @@ const Master = () => {
         </div>
       </header>
 
+      {/* Основное поле */}
       <div className="flex-1 flex gap-2 p-2 overflow-hidden">
+        {/* Левая панель инструментов */}
         <div className="w-16 bg-soft-ivory/80 backdrop-blur-sm rounded-xl border border-caramel/20 flex flex-col items-center py-4 space-y-4 shadow-lg">
-          <button className="p-2 rounded-lg bg-caramel/10 text-caramel hover:bg-caramel/20 transition-colors" title="Игроки"><Users className="w-6 h-6" /></button>
-          <button className="p-2 rounded-lg text-walnut/60 hover:text-caramel hover:bg-caramel/10 transition-colors" title="Карта"><Map className="w-6 h-6" /></button>
-          <button onClick={() => setShowRules(true)} className="p-2 rounded-lg text-walnut/60 hover:text-caramel hover:bg-caramel/10 transition-colors" title="Правила"><BookOpen className="w-6 h-6" /></button>
-          <button className="p-2 rounded-lg text-walnut/60 hover:text-caramel hover:bg-caramel/10 transition-colors" title="Заклинания"><Sparkles className="w-6 h-6" /></button>
-          <button className="p-2 rounded-lg text-walnut/60 hover:text-caramel hover:bg-caramel/10 transition-colors" title="Зелья"><FlaskConical className="w-6 h-6" /></button>
-          <button className="p-2 rounded-lg text-walnut/60 hover:text-caramel hover:bg-caramel/10 transition-colors" title="Настройки"><Settings className="w-6 h-6" /></button>
-          <button onClick={() => setShowSessionLog(true)} className="p-2 rounded-lg text-walnut/60 hover:text-caramel hover:bg-caramel/10 transition-colors" title="Сводка"><FileText className="w-6 h-6" /></button>
+          <button className="p-2 rounded-lg bg-caramel/10 text-caramel hover:bg-caramel/20 transition-colors" title="Игроки">
+            <Users className="w-6 h-6" />
+          </button>
+          <button className="p-2 rounded-lg text-walnut/60 hover:text-caramel hover:bg-caramel/10 transition-colors" title="Карта">
+            <Map className="w-6 h-6" />
+          </button>
+          <button onClick={() => setShowRules(true)} className="p-2 rounded-lg text-walnut/60 hover:text-caramel hover:bg-caramel/10 transition-colors" title="Правила">
+            <BookOpen className="w-6 h-6" />
+          </button>
+          <button onClick={() => setShowSpells(true)} className="p-2 rounded-lg text-walnut/60 hover:text-caramel hover:bg-caramel/10 transition-colors" title="Заклинания">
+            <Sparkles className="w-6 h-6" />
+          </button>
+          <button onClick={() => setShowPotions(true)} className="p-2 rounded-lg text-walnut/60 hover:text-caramel hover:bg-caramel/10 transition-colors" title="Зелья">
+            <FlaskConical className="w-6 h-6" />
+          </button>
+          <button className="p-2 rounded-lg text-walnut/60 hover:text-caramel hover:bg-caramel/10 transition-colors" title="Настройки">
+            <Settings className="w-6 h-6" />
+          </button>
+          <button onClick={() => setShowSessionLog(true)} className="p-2 rounded-lg text-walnut/60 hover:text-caramel hover:bg-caramel/10 transition-colors" title="Сводка">
+            <FileText className="w-6 h-6" />
+          </button>
           <div className="flex-1"></div>
           <button onClick={() => setShowDiceRoller(true)} className="p-2 rounded-lg bg-caramel text-soft-ivory hover:bg-walnut transition-colors shadow-lg" title="Бросок">
             <Dice5 className="w-6 h-6" />
           </button>
         </div>
 
+        {/* Карта */}
         <div className="flex-1 relative bg-walnut/5 rounded-xl border border-caramel/20 shadow-inner overflow-hidden">
           <GameMap roomCode={room.code} isMaster={true} />
         </div>
 
+        {/* Чат */}
         <div className="w-80 flex flex-col">
-          <Chat messages={messages} onSendMessage={sendMessage} currentUserName={masterName || 'Мастер'} className="flex-1" maxHeight="calc(100vh - 200px)" />
+          <Chat 
+            messages={messages} 
+            onSendMessage={sendMessage} 
+            currentUserName={masterName || 'Мастер'} 
+            className="flex-1" 
+            maxHeight="calc(100vh - 200px)" 
+          />
         </div>
       </div>
 
+      {/* Чарлист (только просмотр) */}
       {showCharacterSheet && selectedCharacter && (
-        <CharacterSheet character={selectedCharacter} onClose={() => { setShowCharacterSheet(false); setSelectedCharacter(null); }} readOnly={true} />
+        <CharacterSheet 
+          character={selectedCharacter} 
+          onClose={() => { setShowCharacterSheet(false); setSelectedCharacter(null); }} 
+          readOnly={true} 
+        />
       )}
 
+      {/* Бросок кубиков */}
       {showDiceRoller && (
-        <DiceRoller onRoll={handleRoll} onClose={() => setShowDiceRoller(false)} userId={`master_${room.code}`} userName={masterName || 'Мастер'} />
+        <DiceRoller 
+          onRoll={handleRoll} 
+          onClose={() => setShowDiceRoller(false)} 
+          userId={`master_${room.code}`} 
+          userName={masterName || 'Мастер'} 
+        />
       )}
 
+      {/* Книга правил */}
       {showRules && <RulesBook onClose={() => setShowRules(false)} />}
+
+      {/* Заклинания */}
+      {showSpells && <SpellsBook onClose={() => setShowSpells(false)} />}
+
+      {/* Зелья */}
+      {showPotions && <PotionsBook onClose={() => setShowPotions(false)} />}
+
+      {/* Сводка сессии */}
       {showSessionLog && <SessionLog roomCode={room.code} onClose={() => setShowSessionLog(false)} />}
     </div>
   );
