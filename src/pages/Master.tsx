@@ -2,7 +2,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { 
   LogOut, Users, Map, Settings, BookOpen, Sparkles, 
-  FlaskConical, Dice5, Copy, Check, Key, FileText, X
+  FlaskConical, Dice5, Copy, Check, Key, FileText
 } from 'lucide-react';
 import Button from '../components/ui/Button';
 import CharacterSheet from '../components/character/CharacterSheet';
@@ -29,7 +29,6 @@ const Master = () => {
   const [showSessionLog, setShowSessionLog] = useState(false);
   const [showSpells, setShowSpells] = useState(false);
   const [showPotions, setShowPotions] = useState(false);
-  const [showInventory, setShowInventory] = useState(false);
   const [room, setRoom] = useState<any>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [masterName, setMasterName] = useState('');
@@ -77,7 +76,6 @@ const Master = () => {
 
   return (
     <div className="flex flex-col h-screen bg-soft-ivory">
-      {/* Шапка */}
       <header className="flex justify-between items-center px-6 py-3 border-b border-caramel/20 bg-soft-ivory/80 backdrop-blur-sm">
         <div className="flex items-center space-x-4">
           <span className="font-serif text-xl text-dark-chocolate">КПМБ</span>
@@ -112,9 +110,7 @@ const Master = () => {
         </div>
       </header>
 
-      {/* Основное поле */}
       <div className="flex-1 flex gap-2 p-2 overflow-hidden">
-        {/* Левая панель инструментов */}
         <div className="w-16 bg-soft-ivory/80 backdrop-blur-sm rounded-xl border border-caramel/20 flex flex-col items-center py-4 space-y-4 shadow-lg">
           <button className="p-2 rounded-lg bg-caramel/10 text-caramel hover:bg-caramel/20 transition-colors" title="Игроки">
             <Users className="w-6 h-6" />
@@ -143,12 +139,10 @@ const Master = () => {
           </button>
         </div>
 
-        {/* Карта */}
         <div className="flex-1 relative bg-walnut/5 rounded-xl border border-caramel/20 shadow-inner overflow-hidden">
           <GameMap roomCode={room.code} isMaster={true} />
         </div>
 
-        {/* Чат */}
         <div className="w-80 flex flex-col">
           <Chat 
             messages={messages} 
@@ -160,7 +154,6 @@ const Master = () => {
         </div>
       </div>
 
-      {/* Чарлист (только просмотр) */}
       {showCharacterSheet && selectedCharacter && (
         <CharacterSheet 
           character={selectedCharacter} 
@@ -169,7 +162,6 @@ const Master = () => {
         />
       )}
 
-      {/* Бросок кубиков */}
       {showDiceRoller && (
         <DiceRoller 
           onRoll={handleRoll} 
@@ -179,16 +171,9 @@ const Master = () => {
         />
       )}
 
-      {/* Книга правил */}
       {showRules && <RulesBook onClose={() => setShowRules(false)} />}
-
-      {/* Заклинания */}
       {showSpells && <SpellsBook onClose={() => setShowSpells(false)} />}
-
-      {/* Зелья */}
       {showPotions && <PotionsBook onClose={() => setShowPotions(false)} />}
-
-      {/* Сводка сессии */}
       {showSessionLog && <SessionLog roomCode={room.code} onClose={() => setShowSessionLog(false)} />}
     </div>
   );
