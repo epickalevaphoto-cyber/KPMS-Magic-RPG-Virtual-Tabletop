@@ -1,6 +1,6 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import { LogOut, Users, Map, Settings, BookOpen, Sparkles, FlaskConical, Dice5, Copy, Check, Eye, Key, FileText } from 'lucide-react';
+import { LogOut, Users, Map, Settings, BookOpen, Sparkles, FlaskConical, Dice5, Copy, Check, Key, FileText } from 'lucide-react';
 import Button from '../components/ui/Button';
 import CharacterSheet from '../components/character/CharacterSheet';
 import DiceRoller from '../components/dice/DiceRoller';
@@ -56,7 +56,6 @@ const Master = () => {
   const handleCopyCode = () => { navigator.clipboard.writeText(room.code); setCopied(true); setTimeout(() => setCopied(false), 2000); };
   const handleEndGame = () => { if (window.confirm('Вы уверены, что хотите завершить игру?')) { removeRoom(room.code); navigate('/'); } };
   const handleRoll = (text: string) => sendRollMessage(text);
-  const characters = getCharactersByRoom(room.id);
 
   return (
     <div className="flex flex-col h-screen bg-soft-ivory">
