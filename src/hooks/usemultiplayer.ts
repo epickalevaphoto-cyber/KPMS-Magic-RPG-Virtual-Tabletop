@@ -1,9 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { 
   initPeer, getPeer, getMyId, setRoomCode,
-  setIsMaster, getIsMaster, connectToPlayer, sendToAll,
-  onConnection, onMessage, closeAllConnections,
-  isConnected, getConnectionCount
+  setIsMaster, connectToPlayer, sendToAll,
+  onConnection, onMessage, closeAllConnections
 } from '../services/peerService';
 
 interface MultiplayerState {
