@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Search, X, BookOpen, Wand2, FlaskConical, Sword, Shield, Users, Cat, Feather, Rabbit, Snake, Heart, Crown, Sparkles } from 'lucide-react';
+import { Search, X, BookOpen, Wand2, FlaskConical, Shield, Users, Cat, Heart, Crown, Sparkles, Sword } from 'lucide-react';
 
 interface RuleSection {
   id: string;
@@ -426,7 +426,6 @@ const RulesBook = ({ onClose }: RulesBookProps) => {
                     return <li key={i} className="text-walnut/80 ml-4">{line.slice(2)}</li>;
                   }
                   if (line.startsWith('|')) {
-                    // Простая обработка таблиц
                     const cols = line.split('|').filter(c => c.trim());
                     if (cols.length > 1) {
                       return (
