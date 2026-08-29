@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Search, X, BookOpen, Wand2, FlaskConical, Shield, Users, Cat, Heart, Crown, Sparkles, Sword } from 'lucide-react';
+import { Search, X, BookOpen, Wand2, FlaskConical, Shield, Users, Cat, Heart, Crown, Sparkles } from 'lucide-react';
 
 interface RuleSection {
   id: string;
