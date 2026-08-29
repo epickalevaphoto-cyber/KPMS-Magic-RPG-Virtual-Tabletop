@@ -10,8 +10,6 @@ import RulesBook from '../components/rules/RulesBook';
 import SessionLog from '../components/session/SessionLog';
 import { useChat } from '../hooks/useChat';
 import { getRoom, removeRoom } from '../services/roomService';
-import { getCharactersByRoom } from '../services/characterService';
-import { Character } from '../types/character';
 import { useMultiplayer } from '../hooks/useMultiplayer';
 
 const Master = () => {
