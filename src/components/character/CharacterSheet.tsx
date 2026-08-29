@@ -186,4 +186,104 @@ const CharacterSheet = ({ character, onClose, readOnly = false }: CharacterSheet
                 {isEditing && !readOnly && (
                   <div className="mt-2 flex space-x-2">
                     <input type="text" placeholder="Добавить заклинание..." onKeyDown={(e) => { if (e.key === 'Enter' && e.currentTarget.value.trim()) { handleChange('spells', [...char.spells, e.currentTarget.value.trim()]); e.currentTarget.value = ''; } }} className="flex-1 px-3 py-1 rounded-lg border border-caramel/30 focus:border-caramel focus:outline-none transition-colors text-sm" />
-                    <Button variant="secondary" size="sm" onClick={() => { const input = document.querySelector('input[placeholder="Добавить заклинание..."]') as HTMLInputElement; if (input && input
+                    <Button variant="secondary" size="sm" onClick={() => { const input = document.querySelector('input[placeholder="Добавить заклинание..."]') as HTMLInputElement; if (input && input.value.trim()) { handleChange('spells', [...char.spells, input.value.trim()]); input.value = ''; } }}><Plus className="w-4 h-4" /></Button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Зелья */}
+          <div className="border border-caramel/20 rounded-xl p-4">
+            <button onClick={() => setShowPotions(!showPotions)} className="w-full flex items-center justify-between">
+              <h3 className="font-serif text-lg font-semibold flex items-center"><FlaskConical className="w-5 h-5 text-caramel mr-2" /> Зелья</h3>
+              {showPotions ? <ChevronDown className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
+            </button>
+            {showPotions && (
+              <div className="mt-4">
+                <div className="flex flex-wrap gap-2">
+                  {char.potions.map((potion, index) => (
+                    <span key={index} className="bg-caramel/10 px-3 py-1 rounded-full text-sm flex items-center">
+                      {potion}
+                      {isEditing && !readOnly && (
+                        <button onClick={() => handleChange('potions', char.potions.filter((_, i) => i !== index))} className="ml-1 text-walnut/40 hover:text-red-500">
+                          <X className="w-3 h-3" />
+                        </button>
+                      )}
+                    </span>
+                  ))}
+                </div>
+                {isEditing && !readOnly && (
+                  <div className="mt-2 flex space-x-2">
+                    <input type="text" placeholder="Добавить зелье..." onKeyDown={(e) => { if (e.key === 'Enter' && e.currentTarget.value.trim()) { handleChange('potions', [...char.potions, e.currentTarget.value.trim()]); e.currentTarget.value = ''; } }} className="flex-1 px-3 py-1 rounded-lg border border-caramel/30 focus:border-caramel focus:outline-none transition-colors text-sm" />
+                    <Button variant="secondary" size="sm" onClick={() => { const input = document.querySelector('input[placeholder="Добавить зелье..."]') as HTMLInputElement; if (input && input.value.trim()) { handleChange('potions', [...char.potions, input.value.trim()]); input.value = ''; } }}><Plus className="w-4 h-4" /></Button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Инвентарь */}
+          <div className="border border-caramel/20 rounded-xl p-4">
+            <button onClick={() => setShowInventory(!showInventory)} className="w-full flex items-center justify-between">
+              <h3 className="font-serif text-lg font-semibold flex items-center"><BookOpen className="w-5 h-5 text-caramel mr-2" /> Инвентарь</h3>
+              {showInventory ? <ChevronDown className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
+            </button>
+            {showInventory && (
+              <div className="mt-4">
+                <div className="space-y-1">
+                  {char.inventory.map(item => (
+                    <div key={item.id} className="flex items-center justify-between bg-vanilla-cream/30 px-3 py-2 rounded-lg">
+                      <span className="text-sm">{item.name} {item.quantity > 1 && <span className="text-walnut/40 text-xs">x{item.quantity}</span>}</span>
+                      {isEditing && !readOnly && (
+                        <button onClick={() => handleRemoveItem(item.id)} className="text-walnut/40 hover:text-red-500">
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                {isEditing && !readOnly && (
+                  <div className="mt-2 flex space-x-2">
+                    <input type="text" placeholder="Название предмета..." value={newItemName} onChange={(e) => setNewItemName(e.target.value)} className="flex-1 px-3 py-1 rounded-lg border border-caramel/30 focus:border-caramel focus:outline-none transition-colors text-sm" />
+                    <input type="number" value={newItemQuantity} onChange={(e) => setNewItemQuantity(parseInt(e.target.value) || 1)} className="w-16 px-2 py-1 rounded-lg border border-caramel/30 focus:border-caramel focus:outline-none transition-colors text-sm text-center" min={1} />
+                    <Button variant="secondary" size="sm" onClick={handleAddItem}><Plus className="w-4 h-4" /></Button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Сюжетные баллы */}
+          <div className="border border-caramel/20 rounded-xl p-4">
+            <h3 className="font-serif text-lg font-semibold flex items-center"><Shield className="w-5 h-5 text-caramel mr-2" /> Сюжетные баллы</h3>
+            <div className="mt-2">
+              <input type="number" value={char.storyPoints} onChange={(e) => handleChange('storyPoints', parseInt(e.target.value) || 0)} disabled={!isEditing || readOnly} className="w-32 px-3 py-2 rounded-lg border border-caramel/30 focus:border-caramel focus:outline-none transition-colors disabled:bg-vanilla-cream/50 disabled:cursor-not-allowed" min={0} />
+            </div>
+          </div>
+
+          {/* Состояния */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border border-caramel/20 rounded-xl p-4">
+            <div>
+              <h4 className="text-sm font-medium text-walnut/60 mb-1">Физическое состояние</h4>
+              <input type="text" value={char.physicalState} onChange={(e) => handleChange('physicalState', e.target.value)} disabled={!isEditing || readOnly} className="w-full px-3 py-2 rounded-lg border border-caramel/30 focus:border-caramel focus:outline-none transition-colors disabled:bg-vanilla-cream/50 disabled:cursor-not-allowed" />
+            </div>
+            <div>
+              <h4 className="text-sm font-medium text-walnut/60 mb-1">Психическое состояние</h4>
+              <input type="text" value={char.mentalState} onChange={(e) => handleChange('mentalState', e.target.value)} disabled={!isEditing || readOnly} className="w-full px-3 py-2 rounded-lg border border-caramel/30 focus:border-caramel focus:outline-none transition-colors disabled:bg-vanilla-cream/50 disabled:cursor-not-allowed" />
+            </div>
+          </div>
+        </div>
+
+        <div className="sticky bottom-0 bg-soft-ivory border-t border-caramel/20 px-6 py-4 flex justify-end space-x-3">
+          {isEditing && !readOnly && (
+            <Button variant="primary" onClick={handleSave}><Save className="w-4 h-4 mr-2" /> Сохранить</Button>
+          )}
+          <Button variant="secondary" onClick={onClose}>Закрыть</Button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default CharacterSheet;
