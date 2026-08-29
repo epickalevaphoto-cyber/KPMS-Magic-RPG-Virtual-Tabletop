@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Upload, Move, ZoomIn, ZoomOut, Plus, X, Eye, EyeOff } from 'lucide-react';
+import { Upload, ZoomIn, ZoomOut, Plus, X, Eye, EyeOff } from 'lucide-react';
 import Button from '../ui/Button';
 
 interface Token {
