@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { Search, X, FlaskConical, BookOpen } from 'lucide-react';
-import Button from '../ui/Button';
 import { loadGameData, Potion } from '../../services/dataService';
 
 interface PotionsBookProps {
