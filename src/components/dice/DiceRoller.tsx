@@ -17,6 +17,8 @@ interface DiceRollerProps {
     focus: number;
     skills?: { [key: string]: number };
   };
+  presetModifier?: number;
+  presetLabel?: string;
 }
 
 function rollD6(count: number = 1, modifier: number = 0) {
@@ -40,10 +42,12 @@ const DiceRoller = ({
   onClose, 
   userId = 'system', 
   userName = 'Игрок',
-  character 
+  character,
+  presetModifier = 0,
+  presetLabel = ''
 }: DiceRollerProps) => {
   const [diceCount, setDiceCount] = useState(1);
-  const [modifier, setModifier] = useState(0);
+  const [modifier, setModifier] = useState(presetModifier || 0);
   const [diceType, setDiceType] = useState<'d6' | 'd10' | 'd100'>('d10');
   const [showHistory, setShowHistory] = useState(false);
   const [history, setHistory] = useState(getRollHistory());
@@ -59,7 +63,6 @@ const DiceRoller = ({
     const loadSkills = async () => {
       try {
         await loadGameData();
-        // Извлекаем уникальные навыки из заклинаний (или используем стандартный список)
         const skills = ['Чары', 'Зельеварение', 'Трансфигурация', 'Защита от тёмных искусств', 'Травология', 'Полёт на метле', 'Дуэль', 'Алхимия', 'Артефакторика', 'История магии', 'Магловедение', 'Прорицание', 'Нумерология', 'Изучение древних рун'];
         setSkillsList(skills);
         if (skills.length > 0) setSelectedSkill(skills[0]);
@@ -86,8 +89,6 @@ const DiceRoller = ({
 
   // Быстрый бросок с навыком
   const quickRollSkill = (name: string, value: number) => {
-    // Для навыка используем характеристику, указанную в чарлисте
-    // Если нет - используем Сообразительность по умолчанию
     const charValue = character?.intelligence || 3;
     const totalModifier = charValue + value;
     const roll = rollD10(1, totalModifier);
@@ -95,7 +96,7 @@ const DiceRoller = ({
     roll.userName = userName;
     addToHistory(roll);
     setHistory(getRollHistory());
-    const text = `🎲 **${userName}** бросил **${name}** (1d10 + ${charValue} + ${value}): **${roll.results.join(' + ')}** + ${charValue} + ${value} = **${roll.total}**`;
+    const text = `🎲 **${userName}** бросил **${name}** (1d10 + Сообразительность(${charValue}) + ${name}(${value})): **${roll.results.join(' + ')}** + ${charValue} + ${value} = **${roll.total}**`;
     if (onRoll) onRoll(text);
   };
 
@@ -114,7 +115,10 @@ const DiceRoller = ({
     roll.userName = userName;
     addToHistory(roll);
     setHistory(getRollHistory());
-    const text = formatRollText(roll);
+    let text = formatRollText(roll);
+    if (presetLabel) {
+      text = `🎯 **${presetLabel}**\n` + text;
+    }
     if (onRoll) onRoll(text);
   };
 
@@ -134,7 +138,6 @@ const DiceRoller = ({
     }
   };
 
-  // Получаем значения характеристик из персонажа
   const charStats = character || { vitality: 3, speed: 3, intelligence: 3, knowledge: 3, focus: 3 };
 
   return (
@@ -148,6 +151,12 @@ const DiceRoller = ({
             <X className="w-6 h-6" />
           </button>
         </div>
+
+        {presetLabel && (
+          <div className="bg-caramel/10 border border-caramel/20 rounded-lg p-3 mb-4 text-sm text-dark-chocolate">
+            🎯 <span className="font-medium">{presetLabel}</span>
+          </div>
+        )}
 
         {/* Быстрые броски */}
         <div className="mb-4">
@@ -225,7 +234,7 @@ const DiceRoller = ({
             Простой бросок
           </button>
           <button onClick={() => setShowCheckMode(true)} className={`flex-1 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${showCheckMode ? 'bg-caramel text-soft-ivory' : 'bg-vanilla-cream text-walnut hover:bg-caramel/10'}`}>
-            Проверка (1d10 + хар-ка + навык)
+            Проверка
           </button>
         </div>
 
