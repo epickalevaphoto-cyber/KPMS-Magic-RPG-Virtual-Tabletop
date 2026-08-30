@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X, Clock, FileText, Download, Trash2, Sparkles, Sword, Gift } from 'lucide-react';
+import { X, Clock, FileText, Download, Trash2 } from 'lucide-react';
 import Button from '../ui/Button';
 
 interface LogEntry {
@@ -64,7 +64,6 @@ const SessionLog = ({ roomCode, onClose }: SessionLogProps) => {
     }
   };
 
-  // Группировка по датам
   const groupedLogs = logs.reduce((groups: { [key: string]: LogEntry[] }, log) => {
     const date = new Date(log.timestamp).toLocaleDateString();
     if (!groups[date]) groups[date] = [];
