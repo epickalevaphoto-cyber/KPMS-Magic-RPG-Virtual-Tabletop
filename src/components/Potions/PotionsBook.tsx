@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Search, X, FlaskConical, BookOpen, Check, Plus, Dice5 } from 'lucide-react';
+import { Search, X, FlaskConical, BookOpen, Check } from 'lucide-react';
 import { loadGameData, Potion } from '../../services/dataService';
 import Button from '../ui/Button';
 import DiceRoller from '../dice/DiceRoller';
@@ -15,6 +15,7 @@ interface PotionsBookProps {
   onRoll?: (text: string) => void;
   onAddToInventory?: (potionName: string) => void;
   inventory?: string[];
+  onUsePotion?: (potionName: string, effect: string) => void;
 }
 
 const PotionsBook = ({ 
@@ -24,7 +25,8 @@ const PotionsBook = ({
   character,
   onRoll,
   onAddToInventory,
-  inventory = []
+  inventory = [],
+  onUsePotion
 }: PotionsBookProps) => {
   const [potions, setPotions] = useState<Potion[]>([]);
   const [search, setSearch] = useState('');
@@ -34,6 +36,7 @@ const PotionsBook = ({
   const [brewResult, setBrewResult] = useState<{ success: boolean; message: string } | null>(null);
   const [showDiceRoller, setShowDiceRoller] = useState(false);
   const [brewingPotion, setBrewingPotion] = useState<Potion | null>(null);
+  const [showEffect, setShowEffect] = useState(false);
 
   useEffect(() => {
     const loadData = async () => {
@@ -50,24 +53,18 @@ const PotionsBook = ({
     potion.effect.toLowerCase().includes(search.toLowerCase())
   );
 
-  // Проверка, есть ли зелье в инвентаре
   const isPotionInInventory = (potionName: string): boolean => {
     return inventory.includes(potionName);
   };
 
-  // Приготовление зелья
   const brewPotion = (potion: Potion) => {
     setBrewingPotion(potion);
     setShowDiceRoller(true);
   };
 
-  // Обработка результата броска для варки зелья
   const handleBrewRoll = (text: string) => {
-    // Извлекаем результат из текста броска
     const totalMatch = text.match(/\*\*(\d+)\*\*$/);
     const total = totalMatch ? parseInt(totalMatch[1]) : 0;
-    
-    // Сложность варки зелья (по умолчанию 15, можно сделать разной для каждого зелья)
     const difficulty = 15;
     const success = total >= difficulty;
     
@@ -83,7 +80,6 @@ const PotionsBook = ({
     if (onRoll) onRoll(text);
   };
 
-  // Добавление зелья в инвентарь
   const addToInventory = (potionName: string) => {
     if (onAddToInventory) {
       onAddToInventory(potionName);
@@ -92,16 +88,17 @@ const PotionsBook = ({
     setBrewingPotion(null);
   };
 
-  // Использование зелья из инвентаря
   const usePotion = (potion: Potion) => {
     setSelectedPotion(potion);
     setShowEffect(true);
+    if (onUsePotion) {
+      onUsePotion(potion.name, potion.effect);
+    }
     if (onRoll) {
       onRoll(`🧪 **${userName}** использовал зелье **${potion.name}**: ${potion.effect}`);
     }
   };
 
-  // Получаем значение навыка Зельеварение
   const getPotionSkill = (): number => {
     return character?.skills?.['Зельеварение'] || 0;
   };
