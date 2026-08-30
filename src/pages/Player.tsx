@@ -243,7 +243,14 @@ const Player = () => {
           onClose={() => setShowDiceRoller(false)} 
           userId={userId} 
           userName={playerName || 'Игрок'}
-          character={myCharacter || undefined}
+          character={myCharacter ? {
+            vitality: myCharacter.vitality,
+            speed: myCharacter.speed,
+            intelligence: myCharacter.intelligence,
+            knowledge: myCharacter.knowledge,
+            focus: myCharacter.focus,
+            skills: myCharacter.skills
+          } : undefined}
         />
       )}
 
@@ -256,7 +263,14 @@ const Player = () => {
           onClose={() => setShowSpells(false)} 
           userId={userId}
           userName={playerName || 'Игрок'}
-          character={myCharacter || undefined}
+          character={myCharacter ? {
+            vitality: myCharacter.vitality,
+            speed: myCharacter.speed,
+            intelligence: myCharacter.intelligence,
+            knowledge: myCharacter.knowledge,
+            focus: myCharacter.focus,
+            skills: myCharacter.skills
+          } : undefined}
           onRoll={handleRoll}
         />
       )}
@@ -265,6 +279,19 @@ const Player = () => {
       {showPotions && (
         <PotionsBook 
           onClose={() => setShowPotions(false)} 
+          userId={userId}
+          userName={playerName || 'Игрок'}
+          character={myCharacter ? {
+            knowledge: myCharacter.knowledge,
+            skills: myCharacter.skills
+          } : undefined}
+          onRoll={handleRoll}
+          inventory={myCharacter?.inventory.map(item => item.name) || []}
+          onAddToInventory={(potionName) => {
+            if (myCharacter) {
+              sendRollMessage(`🧪 **${playerName}** сварил зелье **${potionName}** и положил его в инвентарь!`);
+            }
+          }}
           onUsePotion={(name, effect) => {
             sendRollMessage(`🧪 **${playerName}** использовал зелье **${name}**: ${effect}`);
           }}
