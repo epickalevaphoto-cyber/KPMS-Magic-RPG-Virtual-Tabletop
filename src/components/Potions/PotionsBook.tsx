@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Search, X, FlaskConical, BookOpen, Check, AlertCircle } from 'lucide-react';
+import { Search, X, FlaskConical, BookOpen, Check } from 'lucide-react';
 import { loadGameData, Potion } from '../../services/dataService';
 import Button from '../ui/Button';
 
