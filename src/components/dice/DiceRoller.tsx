@@ -58,7 +58,7 @@ const DiceRoller = ({
   useEffect(() => {
     const loadSkills = async () => {
       try {
-        const data = await loadGameData();
+        await loadGameData();
         // Извлекаем уникальные навыки из заклинаний (или используем стандартный список)
         const skills = ['Чары', 'Зельеварение', 'Трансфигурация', 'Защита от тёмных искусств', 'Травология', 'Полёт на метле', 'Дуэль', 'Алхимия', 'Артефакторика', 'История магии', 'Магловедение', 'Прорицание', 'Нумерология', 'Изучение древних рун'];
         setSkillsList(skills);
@@ -96,18 +96,6 @@ const DiceRoller = ({
     addToHistory(roll);
     setHistory(getRollHistory());
     const text = `🎲 **${userName}** бросил **${name}** (1d10 + ${charValue} + ${value}): **${roll.results.join(' + ')}** + ${charValue} + ${value} = **${roll.total}**`;
-    if (onRoll) onRoll(text);
-  };
-
-  // Бросок с выбором характеристики и навыка
-  const rollWithCharAndSkill = (charName: string, charValue: number, skillName: string, skillValue: number) => {
-    const totalModifier = charValue + skillValue;
-    const roll = rollD10(1, totalModifier);
-    roll.userId = userId;
-    roll.userName = userName;
-    addToHistory(roll);
-    setHistory(getRollHistory());
-    const text = `🎲 **${userName}** бросил **${skillName}** (1d10 + ${charName}(${charValue}) + ${skillName}(${skillValue})): **${roll.results.join(' + ')}** + ${charValue} + ${skillValue} = **${roll.total}**`;
     if (onRoll) onRoll(text);
   };
 
