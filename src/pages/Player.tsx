@@ -236,13 +236,14 @@ const Player = () => {
         />
       )}
 
-      {/* Бросок кубиков */}
+      {/* Бросок кубиков с передачей персонажа */}
       {showDiceRoller && (
         <DiceRoller 
           onRoll={handleRoll} 
           onClose={() => setShowDiceRoller(false)} 
           userId={userId} 
-          userName={playerName || 'Игрок'} 
+          userName={playerName || 'Игрок'}
+          character={myCharacter || undefined}
         />
       )}
 
@@ -271,13 +272,22 @@ const Player = () => {
               </button>
             </div>
             {myCharacter && myCharacter.inventory.length === 0 ? (
-              <p className="text-walnut/40 text-center py-8">Инвентарь пуст</p>
+              <div className="text-center py-8">
+                <Backpack className="w-12 h-12 text-walnut/20 mx-auto mb-2" />
+                <p className="text-walnut/40">Инвентарь пуст</p>
+                <p className="text-xs text-walnut/30 mt-1">Добавьте предметы в чарлисте</p>
+              </div>
             ) : (
               <div className="space-y-2 max-h-96 overflow-y-auto">
                 {myCharacter?.inventory.map(item => (
-                  <div key={item.id} className="bg-vanilla-cream/30 rounded-lg px-4 py-2 flex justify-between items-center">
-                    <span className="text-dark-chocolate">{item.name}</span>
-                    <span className="text-xs text-walnut/40">×{item.quantity}</span>
+                  <div key={item.id} className="bg-vanilla-cream/30 rounded-lg px-4 py-2 flex justify-between items-center hover:bg-vanilla-cream/50 transition-colors">
+                    <div>
+                      <span className="text-dark-chocolate">{item.name}</span>
+                      {item.description && (
+                        <p className="text-xs text-walnut/40">{item.description}</p>
+                      )}
+                    </div>
+                    <span className="text-xs text-walnut/40 bg-white/50 px-2 py-0.5 rounded-full">×{item.quantity}</span>
                   </div>
                 ))}
               </div>
