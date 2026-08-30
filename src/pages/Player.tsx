@@ -295,4 +295,24 @@ const Player = () => {
             ) : (
               <div className="space-y-2 max-h-96 overflow-y-auto">
                 {myCharacter?.inventory.map(item => (
-                  <
+                  <div key={item.id} className="bg-vanilla-cream/30 rounded-lg px-4 py-2 flex justify-between items-center hover:bg-vanilla-cream/50 transition-colors">
+                    <div>
+                      <span className="text-dark-chocolate">{item.name}</span>
+                      {item.description && (
+                        <p className="text-xs text-walnut/40">{item.description}</p>
+                      )}
+                    </div>
+                    <span className="text-xs text-walnut/40 bg-white/50 px-2 py-0.5 rounded-full">×{item.quantity}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+            <Button variant="primary" className="w-full mt-4" onClick={() => setShowInventory(false)}>Закрыть</Button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default Player;
